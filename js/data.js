@@ -77,112 +77,94 @@ export const employees = [
   { id: 'EMP020', firstName: 'Laura', lastName: 'Walker', phone: '07700 900020', email: 'l.walker@buildco.co.uk', trades: ['Plasterer', 'Painter'], site: 'S003', status: 'active', startDate: '2024-02-10' },
 ];
 
-// ---------- Certifications (sample data) ----------
+// ---------- Certifications ----------
 export const certifications = [
-  // EMP001 - Electrician, fully certs but some expiring
-  { employeeId: 'EMP001', certId: 'CSCS', issued: daysAgo(550), expires: daysFromNow(15), image: null },
-  { employeeId: 'EMP001', certId: 'ElectricalCert', issued: daysAgo(300), expires: daysFromNow(200), image: null },
-  { employeeId: 'EMP001', certId: 'WorkingAtHeight', issued: daysAgo(600), expires: daysFromNow(-10), image: null },
-  { employeeId: 'EMP001', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(15), image: null },
-  { employeeId: 'EMP001', certId: 'ManualHandling', issued: daysAgo(200), expires: daysFromNow(550), image: null },
-
-  // EMP002 - Plumber/Gas Safe
-  { employeeId: 'EMP002', certId: 'CSCS', issued: daysAgo(1000), expires: daysFromNow(500), image: null },
-  { employeeId: 'EMP002', certId: 'GasSafe', issued: daysAgo(380), expires: daysFromNow(-5), image: null },
-  { employeeId: 'EMP002', certId: 'FirstAid', issued: daysAgo(900), expires: daysFromNow(50), image: null },
-  { employeeId: 'EMP002', certId: 'Asbestos', issued: daysAgo(400), expires: daysFromNow(-30), image: null },
-
-  // EMP003 - Bricklayer
-  { employeeId: 'EMP003', certId: 'CSCS', issued: daysAgo(200), expires: daysFromNow(1600), image: null },
-  { employeeId: 'EMP003', certId: 'ManualHandling', issued: daysAgo(100), expires: daysFromNow(640), image: null },
-  { employeeId: 'EMP003', certId: 'WorkingAtHeight', issued: daysAgo(500), expires: daysFromNow(20), image: null },
-
-  // EMP004 - Safety Officer (very well certified)
-  { employeeId: 'EMP004', certId: 'CSCS', issued: daysAgo(100), expires: daysFromNow(1700), image: null },
-  { employeeId: 'EMP004', certId: 'SMSTS', issued: daysAgo(200), expires: daysFromNow(1600), image: null },
-  { employeeId: 'EMP004', certId: 'FirstAid', issued: daysAgo(1000), expires: daysFromNow(80), image: null },
-  { employeeId: 'EMP004', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(15), image: null },
-  { employeeId: 'EMP004', certId: 'FireMarshal', issued: daysAgo(400), expires: daysFromNow(-40), image: null },
-
-  // EMP005 - Carpenter/Joiner
-  { employeeId: 'EMP005', certId: 'CSCS', issued: daysAgo(300), expires: daysFromNow(1500), image: null },
-  { employeeId: 'EMP005', certId: 'WorkingAtHeight', issued: daysAgo(700), expires: daysFromNow(25), image: null },
-  { employeeId: 'EMP005', certId: 'ManualHandling', issued: daysAgo(150), expires: daysFromNow(590), image: null },
-
-  // EMP006 - Painter/Plasterer
-  { employeeId: 'EMP006', certId: 'CSCS', issued: daysAgo(400), expires: daysFromNow(1400), image: null },
-  { employeeId: 'EMP006', certId: 'AbrasiveWheel', issued: daysAgo(200), expires: daysFromNow(550), image: null },
-  { employeeId: 'EMP006', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(10), image: null },
-
-  // EMP007 - Scaffolder/Steel Fixer
-  { employeeId: 'EMP007', certId: 'CSCS', issued: daysAgo(150), expires: daysFromNow(1650), image: null },
-  { employeeId: 'EMP007', certId: 'WorkingAtHeight', issued: daysAgo(100), expires: daysFromNow(640), image: null },
-  { employeeId: 'EMP007', certId: 'PASMA', issued: daysAgo(500), expires: daysFromNow(10), image: null },
-  { employeeId: 'EMP007', certId: 'FirstAid', issued: daysAgo(600), expires: daysFromNow(480), image: null },
-
-  // EMP008 - Surveyor
-  { employeeId: 'EMP008', certId: 'CSCS', issued: daysAgo(100), expires: daysFromNow(1700), image: null },
-  { employeeId: 'EMP008', certId: 'SMSTS', issued: daysAgo(300), expires: daysFromNow(1500), image: null },
-
-  // EMP009 - Crane/Plant Operator
-  { employeeId: 'EMP009', certId: 'CSCS', issued: daysAgo(500), expires: daysFromNow(1300), image: null },
-  { employeeId: 'EMP009', certId: 'CraneCert', issued: daysAgo(600), expires: daysFromNow(15), image: null },
-  { employeeId: 'EMP009', certId: 'IPAF', issued: daysAgo(400), expires: daysFromNow(20), image: null },
-  { employeeId: 'EMP009', certId: 'WorkingAtHeight', issued: daysAgo(200), expires: daysFromNow(540), image: null },
-  { employeeId: 'EMP009', certId: 'ConfinedSpace', issued: daysAgo(300), expires: daysFromNow(440), image: null },
-
-  // EMP010 - Groundworker
-  { employeeId: 'EMP010', certId: 'CSCS', issued: daysAgo(200), expires: daysFromNow(1600), image: null },
-  { employeeId: 'EMP010', certId: 'ManualHandling', issued: daysAgo(100), expires: daysFromNow(640), image: null },
-  { employeeId: 'EMP010', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(12), image: null },
-
-  // EMP011 - Roofer
-  { employeeId: 'EMP011', certId: 'CSCS', issued: daysAgo(400), expires: daysFromNow(1400), image: null },
-  { employeeId: 'EMP011', certId: 'WorkingAtHeight', issued: daysAgo(700), expires: daysFromNow(-20), image: null },
-  { employeeId: 'EMP011', certId: 'IPAF', issued: daysAgo(400), expires: daysFromNow(25), image: null },
-
-  // EMP012 - Electrician/Fire Marshal
-  { employeeId: 'EMP012', certId: 'CSCS', issued: daysAgo(300), expires: daysFromNow(1500), image: null },
-  { employeeId: 'EMP012', certId: 'ElectricalCert', issued: daysAgo(100), expires: daysFromNow(1100), image: null },
-  { employeeId: 'EMP012', certId: 'FireMarshal', issued: daysAgo(300), expires: daysFromNow(60), image: null },
-  { employeeId: 'EMP012', certId: 'WorkingAtHeight', issued: daysAgo(200), expires: daysFromNow(540), image: null },
-
-  // EMP013 - Welder/Steel Fixer
-  { employeeId: 'EMP013', certId: 'CSCS', issued: daysAgo(500), expires: daysFromNow(1300), image: null },
-  { employeeId: 'EMP013', certId: 'ConfinedSpace', issued: daysAgo(300), expires: daysFromNow(440), image: null },
-  { employeeId: 'EMP013', certId: 'AbrasiveWheel', issued: daysAgo(200), expires: daysFromNow(550), image: null },
-
-  // EMP014 - Tiler/Plumber
-  { employeeId: 'EMP014', certId: 'CSCS', issued: daysAgo(50), expires: daysFromNow(1750), image: null },
-  { employeeId: 'EMP014', certId: 'ManualHandling', issued: daysAgo(30), expires: daysFromNow(710), image: null },
-  { employeeId: 'EMP014', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(8), image: null },
-
-  // EMP015 - Glazier
-  { employeeId: 'EMP015', certId: 'CSCS', issued: daysAgo(200), expires: daysFromNow(1600), image: null },
-  { employeeId: 'EMP015', certId: 'WorkingAtHeight', issued: daysAgo(100), expires: daysFromNow(640), image: null },
-
-  // EMP017 - Plant/Crane
-  { employeeId: 'EMP017', certId: 'CSCS', issued: daysAgo(300), expires: daysFromNow(1500), image: null },
-  { employeeId: 'EMP017', certId: 'CraneCert', issued: daysAgo(200), expires: daysFromNow(1600), image: null },
-  { employeeId: 'EMP017', certId: 'IPAF', issued: daysAgo(400), expires: daysFromNow(18), image: null },
-
-  // EMP018 - Foreman/Carpenter
-  { employeeId: 'EMP018', certId: 'CSCS', issued: daysAgo(150), expires: daysFromNow(1650), image: null },
-  { employeeId: 'EMP018', certId: 'SMSTS', issued: daysAgo(200), expires: daysFromNow(1600), image: null },
-  { employeeId: 'EMP018', certId: 'FirstAid', issued: daysAgo(500), expires: daysFromNow(560), image: null },
-  { employeeId: 'EMP018', certId: 'WorkingAtHeight', issued: daysAgo(300), expires: daysFromNow(440), image: null },
-
-  // EMP019 - Scaffolder
-  { employeeId: 'EMP019', certId: 'CSCS', issued: daysAgo(100), expires: daysFromNow(1700), image: null },
-  { employeeId: 'EMP019', certId: 'PASMA', issued: daysAgo(50), expires: daysFromNow(1750), image: null },
-  { employeeId: 'EMP019', certId: 'WorkingAtHeight', issued: daysAgo(100), expires: daysFromNow(640), image: null },
-
-  // EMP020 - Plasterer/Painter
-  { employeeId: 'EMP020', certId: 'CSCS', issued: daysAgo(30), expires: daysFromNow(1770), image: null },
-  { employeeId: 'EMP020', certId: 'ManualHandling', issued: daysAgo(30), expires: daysFromNow(710), image: null },
+  // EMP001
+  { employeeId: 'EMP001', certId: 'CSCS', issued: daysAgo(550), expires: daysFromNow(15), images: [] },
+  { employeeId: 'EMP001', certId: 'ElectricalCert', issued: daysAgo(300), expires: daysFromNow(200), images: [] },
+  { employeeId: 'EMP001', certId: 'WorkingAtHeight', issued: daysAgo(600), expires: daysFromNow(-10), images: [] },
+  { employeeId: 'EMP001', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(15), images: [] },
+  { employeeId: 'EMP001', certId: 'ManualHandling', issued: daysAgo(200), expires: daysFromNow(550), images: [] },
+  // EMP002
+  { employeeId: 'EMP002', certId: 'CSCS', issued: daysAgo(1000), expires: daysFromNow(500), images: [] },
+  { employeeId: 'EMP002', certId: 'GasSafe', issued: daysAgo(380), expires: daysFromNow(-5), images: [] },
+  { employeeId: 'EMP002', certId: 'FirstAid', issued: daysAgo(900), expires: daysFromNow(50), images: [] },
+  { employeeId: 'EMP002', certId: 'Asbestos', issued: daysAgo(400), expires: daysFromNow(-30), images: [] },
+  // EMP003
+  { employeeId: 'EMP003', certId: 'CSCS', issued: daysAgo(200), expires: daysFromNow(1600), images: [] },
+  { employeeId: 'EMP003', certId: 'ManualHandling', issued: daysAgo(100), expires: daysFromNow(640), images: [] },
+  { employeeId: 'EMP003', certId: 'WorkingAtHeight', issued: daysAgo(500), expires: daysFromNow(20), images: [] },
+  // EMP004
+  { employeeId: 'EMP004', certId: 'CSCS', issued: daysAgo(100), expires: daysFromNow(1700), images: [] },
+  { employeeId: 'EMP004', certId: 'SMSTS', issued: daysAgo(200), expires: daysFromNow(1600), images: [] },
+  { employeeId: 'EMP004', certId: 'FirstAid', issued: daysAgo(1000), expires: daysFromNow(80), images: [] },
+  { employeeId: 'EMP004', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(15), images: [] },
+  { employeeId: 'EMP004', certId: 'FireMarshal', issued: daysAgo(400), expires: daysFromNow(-40), images: [] },
+  // EMP005
+  { employeeId: 'EMP005', certId: 'CSCS', issued: daysAgo(300), expires: daysFromNow(1500), images: [] },
+  { employeeId: 'EMP005', certId: 'WorkingAtHeight', issued: daysAgo(700), expires: daysFromNow(25), images: [] },
+  { employeeId: 'EMP005', certId: 'ManualHandling', issued: daysAgo(150), expires: daysFromNow(590), images: [] },
+  // EMP006
+  { employeeId: 'EMP006', certId: 'CSCS', issued: daysAgo(400), expires: daysFromNow(1400), images: [] },
+  { employeeId: 'EMP006', certId: 'AbrasiveWheel', issued: daysAgo(200), expires: daysFromNow(550), images: [] },
+  { employeeId: 'EMP006', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(10), images: [] },
+  // EMP007
+  { employeeId: 'EMP007', certId: 'CSCS', issued: daysAgo(150), expires: daysFromNow(1650), images: [] },
+  { employeeId: 'EMP007', certId: 'WorkingAtHeight', issued: daysAgo(100), expires: daysFromNow(640), images: [] },
+  { employeeId: 'EMP007', certId: 'PASMA', issued: daysAgo(500), expires: daysFromNow(10), images: [] },
+  { employeeId: 'EMP007', certId: 'FirstAid', issued: daysAgo(600), expires: daysFromNow(480), images: [] },
+  // EMP008
+  { employeeId: 'EMP008', certId: 'CSCS', issued: daysAgo(100), expires: daysFromNow(1700), images: [] },
+  { employeeId: 'EMP008', certId: 'SMSTS', issued: daysAgo(300), expires: daysFromNow(1500), images: [] },
+  // EMP009
+  { employeeId: 'EMP009', certId: 'CSCS', issued: daysAgo(500), expires: daysFromNow(1300), images: [] },
+  { employeeId: 'EMP009', certId: 'CraneCert', issued: daysAgo(600), expires: daysFromNow(15), images: [] },
+  { employeeId: 'EMP009', certId: 'IPAF', issued: daysAgo(400), expires: daysFromNow(20), images: [] },
+  { employeeId: 'EMP009', certId: 'WorkingAtHeight', issued: daysAgo(200), expires: daysFromNow(540), images: [] },
+  { employeeId: 'EMP009', certId: 'ConfinedSpace', issued: daysAgo(300), expires: daysFromNow(440), images: [] },
+  // EMP010
+  { employeeId: 'EMP010', certId: 'CSCS', issued: daysAgo(200), expires: daysFromNow(1600), images: [] },
+  { employeeId: 'EMP010', certId: 'ManualHandling', issued: daysAgo(100), expires: daysFromNow(640), images: [] },
+  { employeeId: 'EMP010', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(12), images: [] },
+  // EMP011
+  { employeeId: 'EMP011', certId: 'CSCS', issued: daysAgo(400), expires: daysFromNow(1400), images: [] },
+  { employeeId: 'EMP011', certId: 'WorkingAtHeight', issued: daysAgo(700), expires: daysFromNow(-20), images: [] },
+  { employeeId: 'EMP011', certId: 'IPAF', issued: daysAgo(400), expires: daysFromNow(25), images: [] },
+  // EMP012
+  { employeeId: 'EMP012', certId: 'CSCS', issued: daysAgo(300), expires: daysFromNow(1500), images: [] },
+  { employeeId: 'EMP012', certId: 'ElectricalCert', issued: daysAgo(100), expires: daysFromNow(1100), images: [] },
+  { employeeId: 'EMP012', certId: 'FireMarshal', issued: daysAgo(300), expires: daysFromNow(60), images: [] },
+  { employeeId: 'EMP012', certId: 'WorkingAtHeight', issued: daysAgo(200), expires: daysFromNow(540), images: [] },
+  // EMP013
+  { employeeId: 'EMP013', certId: 'CSCS', issued: daysAgo(500), expires: daysFromNow(1300), images: [] },
+  { employeeId: 'EMP013', certId: 'ConfinedSpace', issued: daysAgo(300), expires: daysFromNow(440), images: [] },
+  { employeeId: 'EMP013', certId: 'AbrasiveWheel', issued: daysAgo(200), expires: daysFromNow(550), images: [] },
+  // EMP014
+  { employeeId: 'EMP014', certId: 'CSCS', issued: daysAgo(50), expires: daysFromNow(1750), images: [] },
+  { employeeId: 'EMP014', certId: 'ManualHandling', issued: daysAgo(30), expires: daysFromNow(710), images: [] },
+  { employeeId: 'EMP014', certId: 'Asbestos', issued: daysAgo(350), expires: daysFromNow(8), images: [] },
+  // EMP015
+  { employeeId: 'EMP015', certId: 'CSCS', issued: daysAgo(200), expires: daysFromNow(1600), images: [] },
+  { employeeId: 'EMP015', certId: 'WorkingAtHeight', issued: daysAgo(100), expires: daysFromNow(640), images: [] },
+  // EMP017
+  { employeeId: 'EMP017', certId: 'CSCS', issued: daysAgo(300), expires: daysFromNow(1500), images: [] },
+  { employeeId: 'EMP017', certId: 'CraneCert', issued: daysAgo(200), expires: daysFromNow(1600), images: [] },
+  { employeeId: 'EMP017', certId: 'IPAF', issued: daysAgo(400), expires: daysFromNow(18), images: [] },
+  // EMP018
+  { employeeId: 'EMP018', certId: 'CSCS', issued: daysAgo(150), expires: daysFromNow(1650), images: [] },
+  { employeeId: 'EMP018', certId: 'SMSTS', issued: daysAgo(200), expires: daysFromNow(1600), images: [] },
+  { employeeId: 'EMP018', certId: 'FirstAid', issued: daysAgo(500), expires: daysFromNow(560), images: [] },
+  { employeeId: 'EMP018', certId: 'WorkingAtHeight', issued: daysAgo(300), expires: daysFromNow(440), images: [] },
+  // EMP019
+  { employeeId: 'EMP019', certId: 'CSCS', issued: daysAgo(100), expires: daysFromNow(1700), images: [] },
+  { employeeId: 'EMP019', certId: 'PASMA', issued: daysAgo(50), expires: daysFromNow(1750), images: [] },
+  { employeeId: 'EMP019', certId: 'WorkingAtHeight', issued: daysAgo(100), expires: daysFromNow(640), images: [] },
+  // EMP020
+  { employeeId: 'EMP020', certId: 'CSCS', issued: daysAgo(30), expires: daysFromNow(1770), images: [] },
+  { employeeId: 'EMP020', certId: 'ManualHandling', issued: daysAgo(30), expires: daysFromNow(710), images: [] },
 ];
 
-// ---------- Timekeeper Records (simulated feed) ----------
+// ---------- Timekeeper Records ----------
 export const timekeeperRecords = [
   { employeeId: 'EMP001', name: 'John Smith', site: 'S001', clockIn: '07:28', clockOut: '17:05', date: daysAgo(0) },
   { employeeId: 'EMP002', name: 'Sarah Johnson', site: 'S001', clockIn: '07:35', clockOut: '17:10', date: daysAgo(0) },
@@ -257,7 +239,6 @@ export function getCertStatus(cert) {
   const now = new Date();
   const exp = new Date(cert.expires);
   const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
-
   if (diffDays < 0) return { status: 'expired', label: 'Expired', daysLeft: diffDays };
   if (diffDays <= 30) return { status: 'expiring', label: `${diffDays} days`, daysLeft: diffDays };
   return { status: 'valid', label: 'Valid', daysLeft: diffDays };
@@ -281,12 +262,8 @@ export function getExpiringCerts(days = 30) {
   const now = new Date();
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() + days);
-
   return certifications
-    .filter(c => {
-      const exp = new Date(c.expires);
-      return exp <= cutoff;
-    })
+    .filter(c => new Date(c.expires) <= cutoff && new Date(c.expires) >= now)
     .sort((a, b) => new Date(a.expires) - new Date(b.expires));
 }
 
