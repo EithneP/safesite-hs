@@ -178,8 +178,8 @@
           <select id="empFilterSite"><option value="">All Sites</option></select>
         </div>
         <div class="filter-group">
-          <label for="empFilterTrade">Trade</label>
-          <select id="empFilterTrade"><option value="">All Trades</option></select>
+          <label>Trades</label>
+          <div class="multi-select" id="empFilterTradeMulti" data-filter="empFilterTrade"></div>
         </div>
         <div class="filter-group">
           <label for="empFilterStatus">Status</label>
@@ -268,8 +268,8 @@
       <!-- Filters -->
       <div class="filters-bar">
         <div class="filter-group">
-          <label for="certFilterType">Certification Type</label>
-          <select id="certFilterType"><option value="">All Types</option></select>
+          <label>Certification Type</label>
+          <div class="multi-select" id="certFilterTypeMulti" data-filter="certFilterType"></div>
         </div>
         <div class="filter-group">
           <label for="certFilterStatus">Status</label>
@@ -362,25 +362,25 @@
           <div class="report-card__icon"><i data-lucide="user-check"></i></div>
           <h3>Employee Compliance Report</h3>
           <p>Full certification status for each employee across all trades</p>
-          <button class="btn btn--primary btn--sm" data-report="employee">Generate</button>
+          <button type="button" class="btn btn--primary btn--sm" data-report="employee" onclick="window.__genReport('employee')">Generate</button>
         </div>
         <div class="report-card" id="reportSite">
           <div class="report-card__icon"><i data-lucide="building-2"></i></div>
           <h3>Site Compliance Report</h3>
           <p>Staff compliance status by site location</p>
-          <button class="btn btn--primary btn--sm" data-report="site">Generate</button>
+          <button type="button" class="btn btn--primary btn--sm" data-report="site" onclick="window.__genReport('site')">Generate</button>
         </div>
         <div class="report-card" id="reportExpiry">
           <div class="report-card__icon"><i data-lucide="calendar-clock"></i></div>
           <h3>Expiry Forecast Report</h3>
           <p>Certifications expiring in the next 30/60/90 days</p>
-          <button class="btn btn--primary btn--sm" data-report="expiry">Generate</button>
+          <button type="button" class="btn btn--primary btn--sm" data-report="expiry" onclick="window.__genReport('expiry')">Generate</button>
         </div>
         <div class="report-card" id="reportTrade">
           <div class="report-card__icon"><i data-lucide="wrench"></i></div>
           <h3>Trade Coverage Report</h3>
           <p>Number of qualified staff per trade across sites</p>
-          <button class="btn btn--primary btn--sm" data-report="trade">Generate</button>
+          <button type="button" class="btn btn--primary btn--sm" data-report="trade" onclick="window.__genReport('trade')">Generate</button>
         </div>
       </div>
 
@@ -406,11 +406,11 @@
             </div>
             <div class="form-group">
               <label>&nbsp;</label>
-              <button class="btn btn--primary btn--sm" id="applyDateRange"><i data-lucide="filter"></i> Filter</button>
+              <button type="button" class="btn btn--primary btn--sm" id="applyDateRange"><i data-lucide="filter"></i> Filter</button>
             </div>
             <div class="form-group">
               <label>&nbsp;</label>
-              <button class="btn btn--ghost btn--sm" id="resetDateRange"><i data-lucide="rotate-ccw"></i> Reset</button>
+              <button type="button" class="btn btn--ghost btn--sm" id="resetDateRange"><i data-lucide="rotate-ccw"></i> Reset</button>
             </div>
           </div>
           <div id="reportContent"></div>
@@ -500,8 +500,11 @@ EMP001, John Smith, Riverside Tower, 07:30, 17:00, 2025-01-15</pre>
   <!-- Image Lightbox -->
   <div class="lightbox-overlay" id="lightboxOverlay">
     <button class="lightbox-close" id="lightboxClose" aria-label="Close image"><i data-lucide="x"></i></button>
+    <button class="lightbox-nav lightbox-nav--prev" id="lightboxPrev" aria-label="Previous image"><i data-lucide="chevron-left"></i></button>
     <img id="lightboxImg" src="" alt="Certificate image">
+    <button class="lightbox-nav lightbox-nav--next" id="lightboxNext" aria-label="Next image"><i data-lucide="chevron-right"></i></button>
     <div class="lightbox-caption" id="lightboxCaption"></div>
+    <div class="lightbox-counter" id="lightboxCounter" style="display:none;"></div>
   </div>
 
   <!-- Toast Container -->
