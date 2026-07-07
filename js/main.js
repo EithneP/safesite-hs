@@ -1,46 +1,114 @@
-import { getData, seedDemoData, checkAndGenerateNotifications, getUnreadCount } from './store.js';
-import { renderDashboard } from './modules/dashboard.js';
-import { renderStaffPage } from './modules/staff.js';
-import { renderCertificatesPage } from './modules/certificates.js';
-import { renderSitesPage } from './modules/sites.js';
-import { renderNotificationsPage } from './modules/notifications.js';
-import { renderReportsPage } from './modules/reports.js';
-import { renderSettingsPage } from './modules/settings.js';
-import { openModal, closeModal } from './ui.js';
+// ============ NAVIGATION & INIT ============
+// All functions are globals loaded via <script> tags — no imports needed
 
-// ===== Navigation =====
-const pages = {
-  dashboard: { render: renderDashboard, title: 'Dashboard' },
-  staff: { render: renderStaffPage, title: 'Staff Management' },
-  certificates: { render: renderCertificatesPage, title: 'Certificates' },
-  sites: { render: renderSitesPage, title: 'Sites' },
-  notifications: { render: renderNotificationsPage, title: 'Notifications' },
-  reports: { render: renderReportsPage, title: 'Reports' },
-  settings: { render: renderSettingsPage, title: 'Settings' }
+var currentPage = 'dashboard';
+
+var pageRenderers = {
+  dashboard: renderDashboard,
+  staff: renderStaffPage,
+  certificates: renderCertificatesPage,
+  sites: renderSitesPage,
+  notifications: renderNotificationsPage,
+  reports: renderReportsPage,
+  settings: renderSettingsPage
 };
 
-let currentPage = 'dashboard';
+var pageTitles = {
+  dashboard: 'Dashboard',
+  staff: 'Staff Management',
+  certificates: 'Certificates',
+  sites: 'Sites',
+  notifications: 'Notifications',
+  reports: 'Reports',
+  settings: 'Settings'
+};
 
 function navigateTo(page) {
-  if (!pages[page]) return;
+  if (!pageRenderers[page]) return;
   currentPage = page;
 
   // Update nav
-  document.querySelectorAll('.nav-item').forEach(item => {
+  document.querySelectorAll('.nav-item').forEach(function(item) {
     item.classList.toggle('active', item.dataset.page === page);
   });
 
+  // Update title
+  document.getElementById('pageTitle').textContent = pageTitles[page] || page;
+
   // Render page
-  pages[page].render();
+  pageRenderers[page]();
 
   // Update URL hash
-  history.replaceState(null, '', `#${page}`);
+  history.replaceState(null, '', '#' + page);
 
   // Close mobile menu
   document.getElementById('sidebar').classList.remove('open');
+
+  // Update badges
+  updateBadges();
 }
 
-// ===== Init =====
+// ===== Badges =====
+function updateBadges() {
+  var data = getData();
+  var unread = getUnreadCount();
+
+  var notifBadge = document.getElementById('notifBadge');
+  if (unread > 0) { notifBadge.textContent = unread; notifBadge.classList.add('visible'); }
+  else { notifBadge.classList.remove('visible'); }
+
+  var now = Date.now();
+  var expCount = data.certificates.filter(function(c) {
+    if (!c.expiryDate) return false;
+    return new Date(c.expiryDate).getTime() < now;
+  }).length + data.certificates.filter(function(c) {
+    if (!c.expiryDate) return false;
+    var days = (new Date(c.expiryDate).getTime() - now) / 86400000;
+    return days > 0 && days <= (data.settings.notifyDaysBefore || 30);
+  }).length;
+
+  var certBadge = document.getElementById('certBadge');
+  if (expCount > 0) { certBadge.textContent = expCount; certBadge.classList.add('visible'); }
+  else { certBadge.classList.remove('visible'); }
+
+  var dashBadge = document.getElementById('dashboardBadge');
+  if (expCount > 0) { dashBadge.textContent = expCount; dashBadge.classList.add('visible'); }
+  else { dashBadge.classList.remove('visible'); }
+}
+
+// ===== Global Search =====
+function handleGlobalSearch(e) {
+  var query = e.target.value.toLowerCase().trim();
+  if (!query) return;
+
+  var data = getData();
+  var match = null;
+
+  // Search staff
+  data.staff.forEach(function(s) {
+    if (match) return;
+    if ((s.firstName + ' ' + s.lastName).toLowerCase().indexOf(query) !== -1) match = 'staff';
+  });
+
+  // Search certs
+  data.certificates.forEach(function(c) {
+    if (match) return;
+    if (c.type.toLowerCase().indexOf(query) !== -1 || (c.number || '').toLowerCase().indexOf(query) !== -1) match = 'certificates';
+  });
+
+  // Search sites
+  data.sites.forEach(function(s) {
+    if (match) return;
+    if (s.name.toLowerCase().indexOf(query) !== -1) match = 'sites';
+  });
+
+  if (match) {
+    navigateTo(match);
+    e.target.value = '';
+  }
+}
+
+// ===== INIT =====
 function init() {
   // Seed demo data if first time
   seedDemoData();
@@ -49,125 +117,63 @@ function init() {
   checkAndGenerateNotifications();
 
   // Initialize Lucide icons
-  lucide.createIcons();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 
   // Set up navigation
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', (e) => {
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.addEventListener('click', function(e) {
       e.preventDefault();
       navigateTo(item.dataset.page);
     });
   });
 
   // Sidebar toggle
-  document.getElementById('sidebarToggle').addEventListener('click', () => {
+  document.getElementById('sidebarToggle').addEventListener('click', function() {
     document.body.classList.toggle('sidebar-collapsed');
   });
 
   // Mobile menu
-  document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+  document.getElementById('mobileMenuBtn').addEventListener('click', function() {
     document.getElementById('sidebar').classList.toggle('open');
   });
 
-  // Close sidebar on mobile overlay click
-  document.getElementById('mainContent').addEventListener('click', () => {
+  // Close sidebar on mobile
+  document.getElementById('mainContent').addEventListener('click', function() {
     document.getElementById('sidebar').classList.remove('open');
   });
 
   // Global search
   document.getElementById('globalSearch').addEventListener('input', handleGlobalSearch);
 
-  // Add Staff button in top bar
-  document.getElementById('addStaffBtn').addEventListener('click', () => {
+  // Add Staff button
+  document.getElementById('addStaffBtn').addEventListener('click', function() {
     navigateTo('staff');
-    // Trigger add staff modal after render
-    setTimeout(() => {
-      const addBtn = document.getElementById('addNewStaffBtn');
+    setTimeout(function() {
+      var addBtn = document.getElementById('addNewStaffBtn');
       if (addBtn) addBtn.click();
     }, 100);
   });
 
+  // Export button
+  document.getElementById('exportDataBtn').addEventListener('click', exportAllData);
+
   // Hash-based routing
-  const hash = window.location.hash.slice(1);
-  if (hash && pages[hash]) {
+  var hash = window.location.hash.slice(1);
+  var validPages = ['dashboard','staff','certificates','sites','notifications','reports','settings'];
+  if (hash && validPages.indexOf(hash) !== -1) {
     navigateTo(hash);
   } else {
     navigateTo('dashboard');
   }
 
-  // Update badges
-  updateBadges();
-
   // Listen for hash changes
-  window.addEventListener('hashchange', () => {
-    const h = window.location.hash.slice(1);
-    if (h && pages[h] && h !== currentPage) navigateTo(h);
+  window.addEventListener('hashchange', function() {
+    var h = window.location.hash.slice(1);
+    if (h && pageRenderers[h] && h !== currentPage) navigateTo(h);
   });
 }
 
-// ===== Badges =====
-function updateBadges() {
-  const data = getData();
-  const unread = getUnreadCount();
-
-  const notifBadge = document.getElementById('notifBadge');
-  if (unread > 0) { notifBadge.textContent = unread; notifBadge.classList.add('visible'); }
-  else { notifBadge.classList.remove('visible'); }
-
-  const certBadge = document.getElementById('certBadge');
-  const now = Date.now();
-  const expCount = data.certificates.filter(c => {
-    if (!c.expiryDate) return false;
-    return new Date(c.expiryDate).getTime() < now;
-  }).length + data.certificates.filter(c => {
-    if (!c.expiryDate) return false;
-    const days = (new Date(c.expiryDate).getTime() - now) / 86400000;
-    return days > 0 && days <= (data.settings.notifyDaysBefore || 30);
-  }).length;
-
-  if (expCount > 0) { certBadge.textContent = expCount; certBadge.classList.add('visible'); }
-  else { certBadge.classList.remove('visible'); }
-
-  const dashBadge = document.getElementById('dashboardBadge');
-  if (expCount > 0) { dashBadge.textContent = expCount; dashBadge.classList.add('visible'); }
-  else { dashBadge.classList.remove('visible'); }
-}
-
-// ===== Global Search =====
-function handleGlobalSearch(e) {
-  const query = e.target.value.toLowerCase().trim();
-  if (!query) return;
-
-  const data = getData();
-  const results = [];
-
-  data.staff.forEach(s => {
-    const name = `${s.firstName} ${s.lastName}`.toLowerCase();
-    if (name.includes(query)) results.push({ type: 'staff', label: `${s.firstName} ${s.lastName}`, page: 'staff' });
-  });
-
-  data.certificates.forEach(c => {
-    if (c.type.toLowerCase().includes(query) || (c.number || '').toLowerCase().includes(query)) {
-      const staff = data.staff.find(s => s.id === c.staffId);
-      results.push({ type: 'cert', label: `${c.type} — ${staff ? staff.firstName + ' ' + staff.lastName : 'Unknown'}`, page: 'certificates' });
-    }
-  });
-
-  data.sites.forEach(s => {
-    if (s.name.toLowerCase().includes(query)) results.push({ type: 'site', label: s.name, page: 'sites' });
-  });
-
-  if (results.length > 0) {
-    const first = results[0];
-    navigateTo(first.page);
-    e.target.value = '';
-  }
-}
-
-// Make updateBadges globally accessible
-window._updateBadges = updateBadges;
-
-// Start — modules are deferred, so DOM is already ready
+// Start
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
