@@ -2,52 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Construction H&S Platform</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Construction H&S Platform</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
-    <div class="app">
-        <aside class="sidebar" id="sidebar">
+<div class="app">
+       <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
                     <i data-lucide="hard-hat"></i>
-                    <span>H&S Platform</span>
-                </div>
-                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-                    <i data-lucide="chevron-left"></i>
+                   <span>H&S Platform</span>
+</div>
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                   <i data-lucide="chevron-left"></i>
                 </button>
             </div>
             <nav class="sidebar-nav" id="sidebarNav">
                 <a href="#dashboard" class="nav-item active" data-page="dashboard">
-                    <i data-lucide="layout-dashboard"></i>
+<i data-lucide="layout-dashboard"></i>
                     <span>Dashboard</span>
                     <span class="nav-badge" id="dashboardBadge"></span>
-                </a>
-                <a href="#staff" class="nav-item" data-page="staff">
+</a>
+<a href="#staff" class="nav-item" data-page="staff">
                     <i data-lucide="users"></i>
                     <span>Staff</span>
                 </a>
                 <a href="#certificates" class="nav-item" data-page="certificates">
-                    <i data-lucide="file-check"></i>
+<i data-lucide="file-check"></i>
                     <span>Certificates</span>
                     <span class="nav-badge" id="certBadge"></span>
                 </a>
                 <a href="#sites" class="nav-item" data-page="sites">
                     <i data-lucide="building-2"></i>
-                    <span>Sites</span>
-                </a>
-                <a href="#notifications" class="nav-item" data-page="notifications">
+<span>Sites</span>
+</a>
+<a href="#notifications" class="nav-item" data-page="notifications">
                     <i data-lucide="bell"></i>
                     <span>Notifications</span>
                     <span class="nav-badge" id="notifBadge"></span>
-                </a>
-                <a href="#reports" class="nav-item" data-page="reports">
+</a>
+<a href="#reports" class="nav-item" data-page="reports">
                     <i data-lucide="bar-chart-2"></i>
-                    <span>Reports</span>
-                </a>
-                <a href="#settings" class="nav-item" data-page="settings">
+<span>Reports</span>
+</a>
+<a href="#settings" class="nav-item" data-page="settings">
                     <i data-lucide="settings"></i>
                     <span>Settings</span>
                 </a>
@@ -61,34 +61,40 @@
         </aside>
 
         <main class="main-content" id="mainContent">
-            <header class="top-bar">
-                <div class="top-bar-left">
-                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+           <header class="top-bar">
+               <div class="top-bar-left">
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
                         <i data-lucide="menu"></i>
                     </button>
                     <h1 class="page-title" id="pageTitle">Dashboard</h1>
-                </div>
-                <div class="top-bar-right">
-                    <div class="search-box">
-                        <i data-lucide="search"></i>
-                        <input type="text" id="globalSearch" placeholder="Search staff, certificates, sites...">
+               </div>
+               <div class="top-bar-right">
+<div class="search-box">
+<i data-lucide="search"></i>
+<input type="text" id="globalSearch" placeholder="Search staff, certificates, sites...">
                     </div>
                     <button class="btn btn-primary" id="addStaffBtn">
-                        <i data-lucide="plus"></i>
+<i data-lucide="plus"></i>
                         Add Staff
-                    </button>
-                </div>
-            </header>
+</button>
+</div>
+</header>
 
-            <div class="page-content" id="pageContent">
-                <!-- Pages will be rendered here -->
-            </div>
+<div class="page-content" id="pageContent"></div>
         </main>
     </div>
 
-    <!-- Modals -->
     <div class="modal-overlay" id="modalOverlay"></div>
 
-    <script type="module" src="js/main.js"></script>
+    <script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+   <script src="js/modules/dashboard.js"></script>
+   <script src="js/modules/staff.js"></script>
+<script src="js/modules/certificates.js"></script>
+    <script src="js/modules/sites.js"></script>
+    <script src="js/modules/notifications.js"></script>
+   <script src="js/modules/reports.js"></script>
+<script src="js/modules/settings.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
