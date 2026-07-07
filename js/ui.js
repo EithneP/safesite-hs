@@ -18,7 +18,7 @@ function toast(message, type = 'success') {
   el.className = `toast ${type}`;
   el.innerHTML = `<i data-lucide="${icons[type] || 'info'}"></i><span>${message}</span>`;
   container.appendChild(el);
-  lucide.createIcons({ nameAttr: 'data-lucide', attrs: {}, icons: {} });
+  lucide.createIcons();
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3500);
 }
 
