@@ -167,5 +167,9 @@ function handleGlobalSearch(e) {
 // Make updateBadges globally accessible
 window._updateBadges = updateBadges;
 
-// Start
-document.addEventListener('DOMContentLoaded', init);
+// Start — modules are deferred, so DOM is already ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
