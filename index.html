@@ -209,12 +209,34 @@ function getDefaultData() {
       emailRecipients: [],
       lastTimeKeeperImport: null
     },
-    staff: [],
-    certificates: [],
-    sites: [],
+    staff: [
+      { id: 1, name: 'John Mitchell', role: 'Site Manager', phone: '07700 900101', email: 'john.mitchell@safesite.co.uk', site: 1, startDate: '2023-03-15', emergencyContact: 'Sarah Mitchell', emergencyPhone: '07700 900102', status: 'active', induction: true, inductionDate: '2023-03-15', photo: '' },
+      { id: 2, name: 'David Chen', role: 'Health & Safety Officer', phone: '07700 900201', email: 'david.chen@safesite.co.uk', site: 1, startDate: '2022-11-01', emergencyContact: 'Lisa Chen', emergencyPhone: '07700 900202', status: 'active', induction: true, inductionDate: '2022-11-01', photo: '' },
+      { id: 3, name: 'Emma Wilson', role: 'Project Engineer', phone: '07700 900301', email: 'emma.wilson@safesite.co.uk', site: 2, startDate: '2024-01-10', emergencyContact: 'Mark Wilson', emergencyPhone: '07700 900302', status: 'active', induction: true, inductionDate: '2024-01-10', photo: '' },
+      { id: 4, name: 'James O\'Brien', role: 'Scaffolder', phone: '07700 900401', email: 'james.obrien@safesite.co.uk', site: 2, startDate: '2023-06-20', emergencyContact: 'Aoife O\'Brien', emergencyPhone: '07700 900402', status: 'active', induction: true, inductionDate: '2023-06-20', photo: '' },
+      { id: 5, name: 'Sarah Khan', role: 'Site Supervisor', phone: '07700 900501', email: 'sarah.khan@safesite.co.uk', site: 3, startDate: '2022-08-01', emergencyContact: 'Amir Khan', emergencyPhone: '07700 900502', status: 'active', induction: true, inductionDate: '2022-08-01', photo: '' },
+      { id: 6, name: 'Tom Bradley', role: 'Operative', phone: '07700 900601', email: 'tom.bradley@safesite.co.uk', site: 1, startDate: '2024-02-05', emergencyContact: 'Karen Bradley', emergencyPhone: '07700 900602', status: 'active', induction: false, inductionDate: '', photo: '' }
+    ],
+    certificates: [
+      { id: 1, staffId: 1, type: 'CSCS Card', number: 'CSCS-123456', issueDate: '2023-04-01', expiryDate: '2026-04-01', status: 'valid', notes: 'Gold card - Site Manager level' },
+      { id: 2, staffId: 2, type: 'NEBOSH General', number: 'NEB-789012', issueDate: '2022-12-01', expiryDate: '2027-12-01', status: 'valid', notes: 'National Diploma in Occupational Health & Safety' },
+      { id: 3, staffId: 1, type: 'First Aid at Work', number: 'FAW-345678', issueDate: '2023-05-15', expiryDate: '2026-05-15', status: 'valid', notes: '3-day course completed' },
+      { id: 4, staffId: 3, type: 'CSCS Card', number: 'CSCS-234567', issueDate: '2024-01-15', expiryDate: '2027-01-15', status: 'valid', notes: 'Silver card - Professional qualified' },
+      { id: 5, staffId: 4, type: 'CSCS Card', number: 'CSCS-345678', issueDate: '2023-07-01', expiryDate: '2025-01-15', status: 'expiring', notes: 'Expiring soon - renewal needed' },
+      { id: 6, staffId: 5, type: 'SMSTS', number: 'SMSTS-456789', issueDate: '2022-09-01', expiryDate: '2027-09-01', status: 'valid', notes: 'Site Management Safety Training Scheme' },
+      { id: 7, staffId: 5, type: 'Asbestos Awareness', number: 'AA-567890', issueDate: '2023-01-15', expiryDate: '2025-01-15', status: 'expired', notes: 'Expired - needs retaking urgently' },
+      { id: 8, staffId: 6, type: 'CSCS Card', number: 'CSCS-678901', issueDate: '2024-02-10', expiryDate: '2027-02-10', status: 'valid', notes: 'Red card - Operative' },
+      { id: 9, staffId: 3, type: 'First Aid at Work', number: 'FAW-789012', issueDate: '2024-03-01', expiryDate: '2027-03-01', status: 'valid', notes: '3-day course' },
+      { id: 10, staffId: 4, type: 'Working at Height', number: 'WAH-890123', issueDate: '2023-06-01', expiryDate: '2025-06-01', status: 'expiring', notes: 'Refresher due soon' }
+    ],
+    sites: [
+      { id: 1, name: 'Riverside Office Complex', address: '45 Thames Road, London SE1 2AB', status: 'active', manager: 1, startDate: '2023-03-01', notes: 'Main project - 6 storey office build', phase: 'Construction' },
+      { id: 2, name: 'Greenfield Housing Estate', address: '12 Oak Lane, Manchester M1 3CD', status: 'active', manager: 3, startDate: '2024-01-05', notes: '48 unit residential development', phase: 'Foundation' },
+      { id: 3, name: 'City Bridge Repair', address: 'Bridge Street, Birmingham B2 4EF', status: 'active', manager: 5, startDate: '2022-07-15', notes: 'Structural repair and reinforcement', phase: 'Maintenance' }
+    ],
     notifications: [],
     riskAssessments: [],
-    nextId: 1
+    nextId: 50
   };
 }
 
@@ -510,22 +532,22 @@ function renderCertificatesPage() {
   var c = document.getElementById('pageContent');
   var certs = data.certificates;
 
+  showTopAction('Add Certificate', 'award', function() { showAddCertModal(); });
+
   if (certs.length === 0) {
-    c.innerHTML = '<div class="empty-state"><i data-lucide="award"></i><p>No certificates on file. Add staff first, then assign certificates.</p></div>';
+    c.innerHTML = '<div class="empty-state"><i data-lucide="award"></i><p>No certificates on file yet. Click "Add Certificate" to get started.</p></div>';
     lucide.createIcons();
-    hideTopAction();
     return;
   }
 
   var rows = certs.map(function(cert) {
     var s = getStaff(cert.staffId);
-    var name = s ? s.firstName + ' ' + s.lastName : 'Unknown';
-    var siteNames = s ? s.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean).join(', ') : '—';
+    var name = s ? (s.name || (s.firstName + ' ' + s.lastName)) : 'Unknown';
+    var siteNames = s ? (s.sites ? s.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean).join(', ') : '—') : '—';
     return '<tr><td><strong>' + name + '</strong></td><td>' + cert.type + '</td><td>' + (cert.number||'—') + '</td><td>' + formatDate(cert.expiryDate) + '</td><td>' + statusBadge(certStatus(cert)) + '</td><td>' + siteNames + '</td><td><button class="btn btn-sm btn-ghost" onclick="editCert(' + cert.id + ')"><i data-lucide="pencil"></i></button> <button class="btn btn-sm btn-ghost" style="color:var(--color-danger)" onclick="deleteCertDirect(' + cert.id + ')"><i data-lucide="trash-2"></i></button></td></tr>';
   }).join('');
 
   c.innerHTML = '<div class="filter-bar"><select class="form-select" id="certFilter" onchange="filterCerts()"><option value="all">All Certificates</option><option value="expired">Expired</option><option value="warning">Expiring Soon</option><option value="valid">Valid</option></select></div><div class="table-container"><table id="certTable"><thead><tr><th>Staff</th><th>Type</th><th>Number</th><th>Expiry</th><th>Status</th><th>Sites</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-  hideTopAction();
   lucide.createIcons();
 }
 
