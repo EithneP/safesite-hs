@@ -1,978 +1,1068 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeSite HS — Health & Safety Platform</title>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <style>
-/* ===== Reset & Base ===== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ============================================
+   SafeSite — Construction H&S Platform
+   CSS Custom Properties & Reset
+   ============================================ */
+
 :root {
-  --color-primary: #f97316;
-  --color-primary-hover: #ea580c;
-  --color-success: #22c55e;
-  --color-warning: #eab308;
+  --color-primary: #e67e22;
+  --color-primary-dark: #cf6d17;
+  --color-primary-light: #f39c12;
+  --color-bg: #f4f6f9;
+  --color-sidebar: #1a1d23;
+  --color-sidebar-text: #a0a4ad;
+  --color-sidebar-active: #e67e22;
+  --color-surface: #ffffff;
+  --color-text: #1a1d23;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
   --color-danger: #ef4444;
   --color-info: #3b82f6;
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --sidebar-bg: #1e293b;
-  --sidebar-text: #b0bec5;
-  --sidebar-active: #f97316;
-  --text: #0f172a;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --border: #e2e8f0;
-  --shadow: 0 1px 3px rgba(0,0,0,.08);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,.1);
-  --radius: 10px;
-  --radius-sm: 6px;
-  --transition: .2s ease;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --sidebar-width: 260px;
+  --topbar-height: 64px;
 }
-html { font-size: 15px; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
-a { color: var(--color-primary); text-decoration: none; }
-img { max-width: 100%; }
-/* ===== Sidebar ===== */
-.sidebar { width: 260px; min-height: 100vh; background: var(--sidebar-bg); color: var(--sidebar-text); position: fixed; left: 0; top: 0; bottom: 0; display: flex; flex-direction: column; z-index: 100; transition: transform var(--transition); }
-.sidebar-brand { padding: 24px 20px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.06); }
-.sidebar-brand .logo-icon { width: 40px; height: 40px; background: #c2410c; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 1.1rem; }
-.sidebar-brand h1 { font-size: 1.15rem; color: #fff; font-weight: 700; }
-.sidebar-brand p { font-size: .7rem; opacity: .8; margin-top: 1px; }
-.sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-sm); color: var(--sidebar-text); cursor: pointer; transition: var(--transition); font-size: .9rem; margin-bottom: 2px; }
-.nav-item:hover { background: rgba(255,255,255,.06); color: #e2e8f0; }
-.nav-item.active { background: #c2410c; color: #fff; font-weight: 600; }
-.nav-item i { width: 20px; height: 20px; flex-shrink: 0; }
-.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.06); font-size: .75rem; }
-/* ===== Main Content ===== */
-.main-content { flex: 1; margin-left: 260px; }
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
-.topbar h2 { font-size: 1.2rem; font-weight: 700; }
-.topbar-actions { display: flex; align-items: center; gap: 10px; }
-.content { padding: 24px 28px; }
-/* ===== Buttons ===== */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); font-size: .85rem; font-weight: 600; border: none; cursor: pointer; transition: var(--transition); }
-.btn i { width: 16px; height: 16px; }
-.btn-primary { background: var(--color-primary); color: #fff; }
-.btn-primary:hover { background: var(--color-primary-hover); }
-.btn-secondary { background: var(--border); color: var(--text); }
-.btn-secondary:hover { background: #cbd5e1; }
-.btn-success { background: var(--color-success); color: #fff; }
-.btn-danger { background: var(--color-danger); color: #fff; }
-.btn-sm { padding: 6px 12px; font-size: .8rem; }
-.btn-ghost { background: transparent; color: var(--text-secondary); }
-.btn-ghost:hover { background: var(--border); }
-/* ===== Cards ===== */
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-.card-header h3 { font-size: 1rem; }
-.card-body { padding: 20px; }
-/* ===== Stats Grid ===== */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.stat-card { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
-.stat-icon { width: 48px; height: 48px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.stat-icon.primary { background: rgba(249,115,22,.1); color: var(--color-primary); }
-.stat-icon.success { background: rgba(34,197,94,.1); color: var(--color-success); }
-.stat-icon.warning { background: rgba(234,179,8,.1); color: var(--color-warning); }
-.stat-icon.danger { background: rgba(239,68,68,.1); color: var(--color-danger); }
-.stat-icon.info { background: rgba(59,130,246,.1); color: var(--color-info); }
-.stat-info h3 { font-size: 1.5rem; font-weight: 700; line-height: 1; }
-.stat-info p { font-size: .8rem; color: var(--text-secondary); margin-top: 2px; }
-/* ===== Tables ===== */
-.table-container { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
-th { font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-secondary); background: var(--bg); }
-/* ===== Forms ===== */
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-weight: 600; font-size: .85rem; margin-bottom: 5px; }
-.form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: .9rem; font-family: inherit; transition: var(--transition); background: var(--surface); color: var(--text); }
-.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(249,115,22,.15); }
-.form-hint { font-size: .75rem; color: var(--text-muted); margin-top: 3px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-.filter-bar .form-select, .filter-bar .form-input { width: auto; min-width: 180px; }
-/* ===== Badges ===== */
-.badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 100px; font-size: .75rem; font-weight: 600; }
-.badge-success { background: rgba(34,197,94,.1); color: var(--color-success); }
-.badge-warning { background: rgba(234,179,8,.1); color: var(--color-warning); }
-.badge-danger { background: rgba(239,68,68,.1); color: var(--color-danger); }
-.badge-info { background: rgba(59,130,246,.1); color: var(--color-info); }
-.badge-neutral { background: var(--border); color: var(--text-secondary); }
-/* ===== Alerts ===== */
-.alert { display: flex; align-items: flex-start; gap: 10px; padding: 14px 18px; border-radius: var(--radius-sm); font-size: .9rem; }
-.alert i { flex-shrink: 0; margin-top: 1px; }
-.alert-success { background: rgba(34,197,94,.1); color: #16a34a; }
-.alert-warning { background: rgba(234,179,8,.1); color: #ca8a04; }
-.alert-danger { background: rgba(239,68,68,.1); color: #dc2626; }
-.alert-info { background: rgba(59,130,246,.1); color: #2563eb; }
-/* ===== Tabs ===== */
-.tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
-.tab-btn { padding: 10px 18px; border: none; background: none; font-size: .9rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: var(--transition); }
-.tab-btn.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
-.tab-btn:hover { color: var(--text); }
-/* ===== Modal ===== */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
-.modal { background: var(--surface); border-radius: var(--radius); width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); }
-.modal-header h3 { font-size: 1.1rem; }
-.modal-body { padding: 24px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--border); }
-/* ===== Toast ===== */
-.toast-container { position: fixed; top: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
-.toast { padding: 12px 20px; border-radius: var(--radius-sm); font-size: .85rem; font-weight: 500; color: #fff; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 8px; animation: slideIn .3s ease; }
-.toast-success { background: #16a34a; }
-.toast-error { background: #dc2626; }
-.toast-warning { background: #ca8a04; }
-.toast-info { background: #2563eb; }
-@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-/* ===== Photo Gallery ===== */
-.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 12px; }
-.photo-card { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); position: relative; }
-.photo-card img { width: 100%; height: 140px; object-fit: cover; }
-.photo-card .photo-caption { padding: 8px 10px; font-size: .8rem; }
-.photo-card .photo-delete { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,.6); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-/* ===== Empty State ===== */
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-.empty-state i { width: 48px; height: 48px; margin-bottom: 12px; opacity: .4; }
-.empty-state p { margin-bottom: 16px; }
-/* ===== Staff Grid ===== */
-.staff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-.staff-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; gap: 14px; align-items: flex-start; cursor: pointer; transition: var(--transition); }
-.staff-card:hover { box-shadow: var(--shadow-lg); border-color: var(--color-primary); }
-.staff-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .95rem; flex-shrink: 0; }
-.staff-card-info h4 { font-size: .95rem; margin-bottom: 3px; }
-.staff-card-info p { font-size: .8rem; color: var(--text-secondary); }
-.staff-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-/* ===== Report ===== */
-.report-tab { margin-top: 8px; }
-/* ===== Print ===== */
-@media print { .sidebar, .topbar { display: none; } .main-content { margin-left: 0; } }
-/* ===== Responsive ===== */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* ============================================
+   Layout
+   ============================================ */
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+/* ============================================
+   Sidebar
+   ============================================ */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--color-sidebar);
+  color: var(--color-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.sidebar__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar__logo-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--color-primary);
+}
+
+.sidebar__logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.sidebar__nav {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-sidebar-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.sidebar__link:hover {
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+}
+
+.sidebar__link--active {
+  background: rgba(230, 126, 34, 0.15);
+  color: var(--color-primary);
+}
+
+.sidebar__link i {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.sidebar__footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sidebar__user-name {
+  display: block;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.sidebar__user-role {
+  display: block;
+  font-size: 0.75rem;
+  color: #b0b4bd;
+}
+
+/* ============================================
+   Top Bar
+   ============================================ */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 32px;
+  height: var(--topbar-height);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar__menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text);
+  padding: 4px;
+}
+
+.topbar__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar__icon-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+  transition: background 0.15s;
+}
+
+.topbar__icon-btn:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.topbar__icon-btn i {
+  width: 20px;
+  height: 20px;
+}
+
+.topbar__badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.topbar__badge:empty,
+.topbar__badge[data-count="0"] {
+  display: none;
+}
+
+/* ============================================
+   Page Content
+   ============================================ */
+
+.page-content {
+  padding: 32px;
+  flex: 1;
+}
+
+/* ============================================
+   Cards
+   ============================================ */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card__title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.card__body {
+  padding: 24px;
+}
+
+/* ============================================
+   Stats Grid (Dashboard)
+   ============================================ */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-card__icon--orange { background: rgba(230,126,34,0.12); color: var(--color-primary); }
+.stat-card__icon--green  { background: rgba(16,185,129,0.12); color: var(--color-success); }
+.stat-card__icon--blue   { background: rgba(59,130,246,0.12); color: var(--color-info); }
+.stat-card__icon--red    { background: rgba(239,68,68,0.12); color: var(--color-danger); }
+
+.stat-card__icon i {
+  width: 24px;
+  height: 24px;
+}
+
+.stat-card__value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-card__label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn i {
+  width: 16px;
+  height: 16px;
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.btn--primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.btn--secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.btn--secondary:hover {
+  background: var(--color-bg);
+}
+
+.btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+  border-color: var(--color-danger);
+}
+
+.btn--danger:hover {
+  background: #dc2626;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+  border-color: transparent;
+}
+
+.btn--ghost:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.btn--sm {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+/* ============================================
+   Tables
+   ============================================ */
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+tr:hover td {
+  background: rgba(0,0,0,0.015);
+}
+
+/* ============================================
+   Badges / Tags
+   ============================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge--success { background: rgba(16,185,129,0.12); color: #059669; }
+.badge--warning { background: rgba(245,158,11,0.12); color: #d97706; }
+.badge--danger  { background: rgba(239,68,68,0.12); color: #dc2626; }
+.badge--info    { background: rgba(59,130,246,0.12); color: #2563eb; }
+.badge--neutral { background: rgba(107,114,128,0.12); color: #4b5563; }
+
+/* ============================================
+   Forms
+   ============================================ */
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  transition: border-color 0.15s;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(230,126,34,0.15);
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* Multi-select checkboxes */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkbox-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--color-surface);
+  user-select: none;
+}
+
+.checkbox-tag input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-tag:has(input:checked) {
+  background: rgba(230,126,34,0.12);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+
+.checkbox-tag:hover {
+  border-color: var(--color-primary);
+}
+
+/* Image upload area */
+.image-upload-area {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  color: var(--color-text-muted);
+}
+
+.image-upload-area:hover {
+  border-color: var(--color-primary);
+}
+
+.image-upload-area i {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+}
+
+.image-upload-area p {
+  font-size: 0.85rem;
+}
+
+.image-preview-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-item__remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ============================================
+   Modal
+   ============================================ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+}
+
+.modal-overlay--open {
+  display: flex;
+}
+
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.modal__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px;
+}
+
+.modal__close:hover {
+  color: var(--color-text);
+}
+
+.modal__body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal__footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ============================================
+   Notifications Pane
+   ============================================ */
+
+.notifications-pane {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  height: 100vh;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  z-index: 150;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.notifications-pane--open {
+  transform: translateX(0);
+}
+
+.notifications-pane__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notifications-pane__header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.notifications-pane__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px;
+}
+
+.notifications-pane__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.notif-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.notif-item:hover {
+  background: #eee;
+}
+
+.notif-item__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notif-item__icon--warning { background: rgba(245,158,11,0.15); color: var(--color-warning); }
+.notif-item__icon--danger  { background: rgba(239,68,68,0.15); color: var(--color-danger); }
+.notif-item__icon--info    { background: rgba(59,130,246,0.15); color: var(--color-info); }
+.notif-item__icon--success { background: rgba(16,185,129,0.15); color: var(--color-success); }
+
+.notif-item__icon i {
+  width: 18px;
+  height: 18px;
+}
+
+.notif-item__text {
+  flex: 1;
+}
+
+.notif-item__title {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.notif-item__desc {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.notif-item__time {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.notif-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+}
+
+.notif-empty i {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+/* ============================================
+   Dashboard specific
+   ============================================ */
+
+.recent-activity {
+  list-style: none;
+}
+
+.recent-activity__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.recent-activity__item:last-child {
+  border-bottom: none;
+}
+
+.recent-activity__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.recent-activity__icon i {
+  width: 16px;
+  height: 16px;
+}
+
+.recent-activity__text {
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+.recent-activity__time {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ============================================
+   Cert Gallery (certificate image thumbnails)
+   ============================================ */
+
+.cert-images {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cert-images img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.cert-images__more {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+/* ============================================
+   Reports
+   ============================================ */
+
+.report-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.report-option {
+  padding: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.report-option:hover {
+  border-color: var(--color-primary);
+}
+
+.report-option--active {
+  border-color: var(--color-primary);
+  background: rgba(230,126,34,0.05);
+}
+
+.report-option i {
+  width: 32px;
+  height: 32px;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.report-option h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.report-option p {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.report-output {
+  margin-top: 24px;
+}
+
+/* ============================================
+   Image Lightbox
+   ============================================ */
+
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 40px;
+  cursor: pointer;
+}
+
+.lightbox-overlay--open {
+  display: flex;
+}
+
+.lightbox-overlay img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: var(--radius);
+  object-fit: contain;
+}
+
+/* ============================================
+   Empty States
+   ============================================ */
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+
+.empty-state i {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.empty-state h3 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+  color: var(--color-text);
+}
+
+.empty-state p {
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+/* ============================================
+   Filter Bar
+   ============================================ */
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-bar .form-input,
+.filter-bar .form-select {
+  width: auto;
+  min-width: 200px;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
 @media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .main-content { margin-left: 0; }
-  .form-row { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .staff-grid { grid-template-columns: 1fr; }
-  .content { padding: 16px; }
-}
-    </style>
-</head>
-<body>
-
-<!-- Sidebar -->
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <div class="logo-icon">SS</div>
-        <div><h1>SafeSite HS</h1><p>Health & Safety Platform</p></div>
-    </div>
-    <nav class="sidebar-nav">
-        <div class="nav-item active" data-page="dashboard"><i data-lucide="layout-dashboard"></i> Dashboard</div>
-        <div class="nav-item" data-page="staff"><i data-lucide="users"></i> Staff</div>
-        <div class="nav-item" data-page="certificates"><i data-lucide="award"></i> Certificates</div>
-        <div class="nav-item" data-page="sites"><i data-lucide="building-2"></i> Sites</div>
-        <div class="nav-item" data-page="notifications"><i data-lucide="bell"></i> Notifications</div>
-        <div class="nav-item" data-page="reports"><i data-lucide="bar-chart-3"></i> Reports</div>
-        <div class="nav-item" data-page="settings"><i data-lucide="settings"></i> Settings</div>
-    </nav>
-    <div class="sidebar-footer">SafeSite HS v1.0</div>
-</aside>
-
-<!-- Main Content -->
-<main class="main-content">
-    <header class="topbar">
-        <h2 id="pageTitle">Dashboard</h2>
-        <div class="topbar-actions">
-            <button class="btn btn-primary" id="topAction" style="display:none"></button>
-        </div>
-    </header>
-    <div class="content" id="pageContent"></div>
-</main>
-
-<!-- Toast Container -->
-<div class="toast-container" id="toastContainer"></div>
-
-<script>
-// ============ DATA STORE ============
-var STORE_KEY = 'hs_platform_data';
-
-function getDefaultData() {
-  return {
-    settings: {
-      companyName: 'SafeSite Construction',
-      notifyDaysBefore: 30,
-      emailNotifications: false,
-      emailRecipients: [],
-      lastTimeKeeperImport: null
-    },
-    staff: [
-      { id: 1, name: 'John Mitchell', role: 'Site Manager', phone: '07700 900101', email: 'john.mitchell@safesite.co.uk', site: 1, startDate: '2023-03-15', emergencyContact: 'Sarah Mitchell', emergencyPhone: '07700 900102', status: 'active', induction: true, inductionDate: '2023-03-15', photo: '' },
-      { id: 2, name: 'David Chen', role: 'Health & Safety Officer', phone: '07700 900201', email: 'david.chen@safesite.co.uk', site: 1, startDate: '2022-11-01', emergencyContact: 'Lisa Chen', emergencyPhone: '07700 900202', status: 'active', induction: true, inductionDate: '2022-11-01', photo: '' },
-      { id: 3, name: 'Emma Wilson', role: 'Project Engineer', phone: '07700 900301', email: 'emma.wilson@safesite.co.uk', site: 2, startDate: '2024-01-10', emergencyContact: 'Mark Wilson', emergencyPhone: '07700 900302', status: 'active', induction: true, inductionDate: '2024-01-10', photo: '' },
-      { id: 4, name: 'James O\'Brien', role: 'Scaffolder', phone: '07700 900401', email: 'james.obrien@safesite.co.uk', site: 2, startDate: '2023-06-20', emergencyContact: 'Aoife O\'Brien', emergencyPhone: '07700 900402', status: 'active', induction: true, inductionDate: '2023-06-20', photo: '' },
-      { id: 5, name: 'Sarah Khan', role: 'Site Supervisor', phone: '07700 900501', email: 'sarah.khan@safesite.co.uk', site: 3, startDate: '2022-08-01', emergencyContact: 'Amir Khan', emergencyPhone: '07700 900502', status: 'active', induction: true, inductionDate: '2022-08-01', photo: '' },
-      { id: 6, name: 'Tom Bradley', role: 'Operative', phone: '07700 900601', email: 'tom.bradley@safesite.co.uk', site: 1, startDate: '2024-02-05', emergencyContact: 'Karen Bradley', emergencyPhone: '07700 900602', status: 'active', induction: false, inductionDate: '', photo: '' }
-    ],
-    certificates: [
-      { id: 1, staffId: 1, type: 'CSCS Card', number: 'CSCS-123456', issueDate: '2023-04-01', expiryDate: '2026-04-01', status: 'valid', notes: 'Gold card - Site Manager level' },
-      { id: 2, staffId: 2, type: 'NEBOSH General', number: 'NEB-789012', issueDate: '2022-12-01', expiryDate: '2027-12-01', status: 'valid', notes: 'National Diploma in Occupational Health & Safety' },
-      { id: 3, staffId: 1, type: 'First Aid at Work', number: 'FAW-345678', issueDate: '2023-05-15', expiryDate: '2026-05-15', status: 'valid', notes: '3-day course completed' },
-      { id: 4, staffId: 3, type: 'CSCS Card', number: 'CSCS-234567', issueDate: '2024-01-15', expiryDate: '2027-01-15', status: 'valid', notes: 'Silver card - Professional qualified' },
-      { id: 5, staffId: 4, type: 'CSCS Card', number: 'CSCS-345678', issueDate: '2023-07-01', expiryDate: '2025-01-15', status: 'expiring', notes: 'Expiring soon - renewal needed' },
-      { id: 6, staffId: 5, type: 'SMSTS', number: 'SMSTS-456789', issueDate: '2022-09-01', expiryDate: '2027-09-01', status: 'valid', notes: 'Site Management Safety Training Scheme' },
-      { id: 7, staffId: 5, type: 'Asbestos Awareness', number: 'AA-567890', issueDate: '2023-01-15', expiryDate: '2025-01-15', status: 'expired', notes: 'Expired - needs retaking urgently' },
-      { id: 8, staffId: 6, type: 'CSCS Card', number: 'CSCS-678901', issueDate: '2024-02-10', expiryDate: '2027-02-10', status: 'valid', notes: 'Red card - Operative' },
-      { id: 9, staffId: 3, type: 'First Aid at Work', number: 'FAW-789012', issueDate: '2024-03-01', expiryDate: '2027-03-01', status: 'valid', notes: '3-day course' },
-      { id: 10, staffId: 4, type: 'Working at Height', number: 'WAH-890123', issueDate: '2023-06-01', expiryDate: '2025-06-01', status: 'expiring', notes: 'Refresher due soon' }
-    ],
-    sites: [
-      { id: 1, name: 'Riverside Office Complex', address: '45 Thames Road, London SE1 2AB', status: 'active', manager: 1, startDate: '2023-03-01', notes: 'Main project - 6 storey office build', phase: 'Construction' },
-      { id: 2, name: 'Greenfield Housing Estate', address: '12 Oak Lane, Manchester M1 3CD', status: 'active', manager: 3, startDate: '2024-01-05', notes: '48 unit residential development', phase: 'Foundation' },
-      { id: 3, name: 'City Bridge Repair', address: 'Bridge Street, Birmingham B2 4EF', status: 'active', manager: 5, startDate: '2022-07-15', notes: 'Structural repair and reinforcement', phase: 'Maintenance' }
-    ],
-    notifications: [],
-    riskAssessments: [],
-    nextId: 50
-  };
-}
-
-function getData() {
-  try {
-    var raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
-  return getDefaultData();
-}
-
-function setData(partial) {
-  var data = getData();
-  Object.assign(data, partial);
-  localStorage.setItem(STORE_KEY, JSON.stringify(data));
-}
-
-function genId() {
-  var data = getData();
-  var id = data.nextId || 1;
-  data.nextId = id + 1;
-  localStorage.setItem(STORE_KEY, JSON.stringify(data));
-  return id;
-}
-
-function getStaff(id) {
-  return getData().staff.find(function(s) { return s.id == id; });
-}
-
-function getSite(id) {
-  return getData().sites.find(function(s) { return s.id == id; });
-}
-
-function getCertsForStaff(staffId) {
-  return getData().certificates.filter(function(c) { return c.staffId == staffId; });
-}
-
-function certStatus(c) {
-  var now = new Date();
-  var exp = new Date(c.expiryDate);
-  var diff = Math.ceil((exp - now) / (1000*60*60*24));
-  if (diff < 0) return 'expired';
-  var days = getData().settings.notifyDaysBefore || 30;
-  if (diff <= 7) return 'critical';
-  if (diff <= days) return 'warning';
-  return 'valid';
-}
-
-function statusBadge(status) {
-  var map = { valid: '<span class="badge badge-success">Valid</span>', warning: '<span class="badge badge-warning">Expiring</span>', critical: '<span class="badge badge-danger">Critical</span>', expired: '<span class="badge badge-danger">Expired</span>' };
-  return map[status] || '';
-}
-
-function formatDate(d) {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-}
-
-function daysUntilExpiry(c) {
-  var now = new Date();
-  var exp = new Date(c.expiryDate);
-  return Math.ceil((exp - now) / (1000*60*60*24));
-}
-
-function getExpiringCerts(days) {
-  var data = getData();
-  return data.certificates.filter(function(c) {
-    var d = daysUntilExpiry(c);
-    return d >= 0 && d <= days;
-  });
-}
-
-function getExpiredCerts() {
-  return getData().certificates.filter(function(c) { return daysUntilExpiry(c) < 0; });
-}
-
-function importTimeKeeperData(records) {
-  var data = getData();
-  var sitesFound = [];
-  records.forEach(function(r) {
-    if (r.siteName && data.sites.indexOf(function(s){ return s.name === r.siteName; }) === -1) {
-      var existing = data.sites.find(function(s){ return s.name === r.siteName; });
-      if (!existing) {
-        var siteId = genId();
-        data.sites.push({ id: siteId, name: r.siteName, address: '', postcode: '', manager: '', notes: '' });
-        sitesFound.push(r.siteName);
-      }
-    }
-  });
-  data.settings.lastTimeKeeperImport = new Date().toISOString();
-  setData(data);
-  return { imported: records.length, sites: sitesFound.length > 0 ? sitesFound : data.sites.map(function(s){return s.name;}) };
-}
-
-function seedDemoData() {
-  var data = getDefaultData();
-  data.settings.companyName = 'Demo Construction Ltd';
-  var s1 = 1, s2 = 2, s3 = 3;
-  data.sites = [
-    { id: s1, name: 'Riverside Towers', address: '45 Thames St', postcode: 'SW1A 1AA', manager: 'John Smith', notes: 'Main project' },
-    { id: s2, name: 'Harbour View Office', address: '12 Dock Road', postcode: 'E14 9SL', manager: 'Sarah Jones', notes: 'Phase 2' },
-    { id: s3, name: 'Central Park Residences', address: '8 Park Lane', postcode: 'W1K 1DE', manager: 'Mike Brown', notes: 'New build' }
-  ];
-  data.staff = [
-    { id: 1, firstName: 'James', lastName: 'Wilson', phone: '07700 123456', email: 'james@demo.com', startDate: '2023-03-15', timekeeperId: 'TK001', trades: ['Electrician'], sites: [s1, s2] },
-    { id: 2, firstName: 'Emma', lastName: 'Taylor', phone: '07700 234567', email: 'emma@demo.com', startDate: '2022-11-01', timekeeperId: 'TK002', trades: ['Plumber'], sites: [s1, s3] },
-    { id: 3, firstName: 'David', lastName: 'Brown', phone: '07700 345678', email: 'david@demo.com', startDate: '2024-01-10', timekeeperId: 'TK003', trades: ['Carpenter'], sites: [s2] },
-    { id: 4, firstName: 'Sophie', lastName: 'Clark', phone: '07700 456789', email: 'sophie@demo.com', startDate: '2023-06-20', timekeeperId: 'TK004', trades: ['Bricklayer'], sites: [s3, s1] },
-    { id: 5, firstName: 'Mark', lastName: 'Davis', phone: '07700 567890', email: 'mark@demo.com', startDate: '2022-08-05', timekeeperId: 'TK005', trades: ['Scaffolder'], sites: [s1, s2, s3] }
-  ];
-  var today = new Date();
-  function addDays(n) { var d = new Date(today); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
-  data.certificates = [
-    { id: 1, staffId: 1, type: 'CSCS Card', number: 'CSC-12345', issueDate: addDays(-300), expiryDate: addDays(65), notes: '' },
-    { id: 2, staffId: 1, type: '18th Edition', number: 'ELE-6789', issueDate: addDays(-200), expiryDate: addDays(-10), notes: 'Expired' },
-    { id: 3, staffId: 2, type: 'CSCS Card', number: 'CSC-23456', issueDate: addDays(-100), expiryDate: addDays(265), notes: '' },
-    { id: 4, staffId: 2, type: 'Gas Safe', number: 'GS-1111', issueDate: addDays(-50), expiryDate: addDays(5), notes: 'Expiring!' },
-    { id: 5, staffId: 3, type: 'CSCS Card', number: 'CSC-34567', issueDate: addDays(-400), expiryDate: addDays(15), notes: 'Warning' },
-    { id: 6, staffId: 4, type: 'CSCS Card', number: 'CSC-45678', issueDate: addDays(-200), expiryDate: addDays(165), notes: '' },
-    { id: 7, staffId: 4, type: 'First Aid', number: 'FA-2222', issueDate: addDays(-150), expiryDate: addDays(215), notes: '' },
-    { id: 8, staffId: 5, type: 'CSCS Card', number: 'CSC-56789', issueDate: addDays(-500), expiryDate: addDays(20), notes: '' },
-    { id: 9, staffId: 5, type: 'Scaffold Competent', number: 'SC-3333', issueDate: addDays(-100), expiryDate: addDays(265), notes: '' },
-    { id: 10, staffId: 5, type: 'Working at Heights', number: 'WAH-4444', issueDate: addDays(-80), expiryDate: addDays(285), notes: '' }
-  ];
-  data.nextId = 100;
-  setData(data);
-}
-
-// ============ UI HELPERS ============
-
-function toast(msg, type) {
-  type = type || 'info';
-  var container = document.getElementById('toastContainer');
-  var el = document.createElement('div');
-  el.className = 'toast toast-' + type;
-  el.textContent = msg;
-  container.appendChild(el);
-  setTimeout(function() { el.remove(); }, 3500);
-}
-
-function showModal(title, bodyHtml, footerHtml) {
-  var overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'activeModal';
-  overlay.innerHTML = '<div class="modal"><div class="modal-header"><h3>' + title + '</h3><button class="btn btn-ghost btn-sm" id="closeModal">&times;</button></div><div class="modal-body">' + bodyHtml + '</div>' + (footerHtml ? '<div class="modal-footer">' + footerHtml + '</div>' : '') + '</div>';
-  document.body.appendChild(overlay);
-  document.getElementById('closeModal').onclick = closeModal;
-  overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
-  lucide.createIcons();
-}
-
-function closeModal() {
-  var m = document.getElementById('activeModal');
-  if (m) m.remove();
-}
-
-function exportAllData() {
-  var data = getData();
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url; a.download = 'safesite_backup_' + new Date().toISOString().split('T')[0] + '.json';
-  a.click(); URL.revokeObjectURL(url);
-  toast('Data exported', 'success');
-}
-
-// ============ DASHBOARD ============
-function renderDashboard() {
-  document.getElementById('pageTitle').textContent = 'Dashboard';
-  var data = getData();
-  var c = document.getElementById('pageContent');
-  var allCerts = data.certificates;
-  var expired = allCerts.filter(function(c){ return daysUntilExpiry(c) < 0; }).length;
-  var expiring = allCerts.filter(function(c){ var d = daysUntilExpiry(c); return d >= 0 && d <= (data.settings.notifyDaysBefore||30); }).length;
-  var valid = allCerts.filter(function(c){ return daysUntilExpiry(c) > (data.settings.notifyDaysBefore||30); }).length;
-
-  c.innerHTML = '<div class="stats-grid"><div class="stat-card"><div class="stat-icon primary"><i data-lucide="users"></i></div><div class="stat-info"><h3>' + data.staff.length + '</h3><p>Total Staff</p></div></div><div class="stat-card"><div class="stat-icon info"><i data-lucide="building-2"></i></div><div class="stat-info"><h3>' + data.sites.length + '</h3><p>Active Sites</p></div></div><div class="stat-card"><div class="stat-icon danger"><i data-lucide="alert-triangle"></i></div><div class="stat-info"><h3>' + expired + '</h3><p>Expired Certs</p></div></div><div class="stat-card"><div class="stat-icon warning"><i data-lucide="clock"></i></div><div class="stat-info"><h3>' + expiring + '</h3><p>Expiring Soon</p></div></div><div class="stat-card"><div class="stat-icon success"><i data-lucide="shield-check"></i></div><div class="stat-info"><h3>' + valid + '</h3><p>Valid Certs</p></div></div></div>';
-
-  if (expired > 0 || expiring > 0) {
-    var alerts = '';
-    if (expired > 0) alerts += '<div class="alert alert-danger" style="margin-bottom:10px"><i data-lucide="alert-circle"></i><div><strong>' + expired + ' certificate(s) expired</strong> — immediate action required.</div></div>';
-    if (expiring > 0) alerts += '<div class="alert alert-warning" style="margin-bottom:10px"><i data-lucide="clock"></i><div><strong>' + expiring + ' certificate(s) expiring soon</strong> — within ' + (data.settings.notifyDaysBefore||30) + ' days.</div></div>';
-    c.innerHTML += '<div class="card" style="margin-bottom:24px"><div class="card-header"><h3>Compliance Alerts</h3></div><div class="card-body">' + alerts + '</div></div>';
+  .sidebar {
+    transform: translateX(-100%);
   }
 
-  if (data.staff.length > 0) {
-    var recentStaff = data.staff.slice(-5).reverse();
-    var rows = recentStaff.map(function(s) {
-      var certs = getCertsForStaff(s.id);
-      var siteNames = s.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean).join(', ') || '—';
-      return '<tr><td><strong>' + s.firstName + ' ' + s.lastName + '</strong></td><td>' + (s.trades.join(', ') || '—') + '</td><td>' + siteNames + '</td><td>' + certs.length + '</td></tr>';
-    }).join('');
-    c.innerHTML += '<div class="card"><div class="card-header"><h3>Recent Staff</h3></div><div class="card-body"><div class="table-container"><table><thead><tr><th>Name</th><th>Trades</th><th>Sites</th><th>Certs</th></tr></thead><tbody>' + rows + '</tbody></table></div></div></div>';
+  .sidebar--open {
+    transform: translateX(0);
   }
 
-  hideTopAction();
-  lucide.createIcons();
-}
-
-// ============ STAFF ============
-function renderStaffPage() {
-  document.getElementById('pageTitle').textContent = 'Staff';
-  var data = getData();
-  var c = document.getElementById('pageContent');
-
-  if (data.staff.length === 0) {
-    c.innerHTML = '<div class="empty-state"><i data-lucide="users"></i><p>No staff members yet. Add your first team member to get started.</p><button class="btn btn-primary" onclick="showAddStaffModal()"><i data-lucide="plus"></i> Add Staff</button></div>';
-    lucide.createIcons();
-    showTopAction('Add Staff', 'showAddStaffModal');
-    return;
+  .main-content {
+    margin-left: 0;
   }
 
-  var grid = data.staff.map(function(s) {
-    var certs = getCertsForStaff(s.id);
-    var siteNames = s.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean);
-    var initials = (s.firstName[0] || '') + (s.lastName[0] || '');
-    var badges = siteNames.map(function(n){return '<span class="badge badge-neutral">' + n + '</span>'}).join('');
-    var certAlert = certs.some(function(c){return certStatus(c)==='expired' || certStatus(c)==='critical'});
-    return '<div class="staff-card" onclick="showStaffDetail(' + s.id + ')"><div class="staff-avatar"' + (certAlert ? ' style="background:var(--color-danger)"' : '') + '>' + initials + '</div><div class="staff-card-info"><h4>' + s.firstName + ' ' + s.lastName + '</h4><p>' + (s.trades.join(', ') || 'No trade assigned') + '</p><div class="staff-card-badges">' + (badges || '<span class="badge badge-neutral">No sites</span>') + '</div></div></div>';
-  }).join('');
-
-  c.innerHTML = '<div class="filter-bar"><input type="text" class="form-input" placeholder="Search staff..." id="staffSearch" oninput="filterStaff()"><button class="btn btn-primary" onclick="showAddStaffModal()"><i data-lucide="plus"></i> Add Staff</button></div><div class="staff-grid" id="staffGrid">' + grid + '</div>';
-  showTopAction('Add Staff', 'showAddStaffModal');
-  lucide.createIcons();
-}
-
-function filterStaff() {
-  var q = document.getElementById('staffSearch').value.toLowerCase();
-  var cards = document.querySelectorAll('.staff-card');
-  cards.forEach(function(card) {
-    card.style.display = card.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
-  });
-}
-
-function showAddStaffModal() {
-  var siteOpts = getData().sites.map(function(s){return '<label style="display:flex;align-items:center;gap:6px;font-weight:normal;cursor:pointer"><input type="checkbox" value="' + s.id + '" class="staffSiteCheck"> ' + s.name + '</label>'}).join('');
-  var body = '<div class="form-row"><div class="form-group"><label>First Name *</label><input type="text" class="form-input" id="staffFirst" required></div><div class="form-group"><label>Last Name *</label><input type="text" class="form-input" id="staffLast" required></div></div><div class="form-row"><div class="form-group"><label>Phone</label><input type="tel" class="form-input" id="staffPhone"></div><div class="form-group"><label>Email</label><input type="email" class="form-input" id="staffEmail"></div></div><div class="form-row"><div class="form-group"><label>Start Date</label><input type="date" class="form-input" id="staffStart"></div><div class="form-group"><label>Timekeeper ID</label><input type="text" class="form-input" id="staffTK"></div></div><div class="form-group"><label>Trades (comma separated)</label><input type="text" class="form-input" id="staffTrades" placeholder="e.g. Electrician, Plumber"></div><div class="form-group"><label>Assign to Sites</label><div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">' + (siteOpts || '<span style="color:var(--text-muted);font-size:.85rem">No sites created yet</span>') + '</div></div>';
-  var footer = '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Save Staff</button>';
-  showModal('Add New Staff Member', body, footer);
-}
-
-function saveStaff() {
-  var first = document.getElementById('staffFirst').value.trim();
-  var last = document.getElementById('staffLast').value.trim();
-  if (!first || !last) { toast('First and last name are required', 'error'); return; }
-  var siteChecks = document.querySelectorAll('.staffSiteCheck:checked');
-  var sites = Array.from(siteChecks).map(function(cb){return parseInt(cb.value)});
-  var trades = document.getElementById('staffTrades').value.split(',').map(function(t){return t.trim()}).filter(Boolean);
-  var data = getData();
-  data.staff.push({
-    id: genId(),
-    firstName: first,
-    lastName: last,
-    phone: document.getElementById('staffPhone').value.trim(),
-    email: document.getElementById('staffEmail').value.trim(),
-    startDate: document.getElementById('staffStart').value,
-    timekeeperId: document.getElementById('staffTK').value.trim(),
-    trades: trades,
-    sites: sites
-  });
-  setData(data);
-  closeModal();
-  toast('Staff member added', 'success');
-  renderStaffPage();
-}
-
-function showStaffDetail(id) {
-  var s = getStaff(id);
-  if (!s) return;
-  var certs = getCertsForStaff(s.id);
-  var siteNames = s.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean);
-  var certRows = certs.map(function(c){return '<tr><td>' + c.type + '</td><td>' + (c.number||'—') + '</td><td>' + formatDate(c.issueDate) + '</td><td>' + formatDate(c.expiryDate) + '</td><td>' + statusBadge(certStatus(c)) + '</td><td><button class="btn btn-sm btn-ghost" onclick="editCert(' + c.id + ')"><i data-lucide="pencil"></i></button> <button class="btn btn-sm btn-ghost" style="color:var(--color-danger)" onclick="deleteCert(' + c.id + ',' + s.id + ')"><i data-lucide="trash-2"></i></button></td></tr>'}).join('');
-
-  var body = '<div style="margin-bottom:16px"><h4>Contact Details</h4><p style="font-size:.85rem;color:var(--text-secondary);margin-top:6px">Phone: ' + (s.phone||'—') + '<br>Email: ' + (s.email||'—') + '<br>Start: ' + formatDate(s.startDate) + '<br>TK ID: ' + (s.timekeeperId||'—') + '<br>Trades: ' + (s.trades.join(', ')||'—') + '<br>Sites: ' + (siteNames.join(', ')||'—') + '</p></div><h4 style="margin-bottom:8px">Certificates (' + certs.length + ')</h4>' + (certs.length > 0 ? '<div class="table-container"><table><thead><tr><th>Type</th><th>Number</th><th>Issue</th><th>Expiry</th><th>Status</th><th></th></tr></thead><tbody>' + certRows + '</tbody></table></div>' : '<p style="color:var(--text-muted)">No certificates on file</p>') + '<button class="btn btn-sm btn-primary" style="margin-top:12px" onclick="closeModal();showAddCertModal(' + s.id + ')"><i data-lucide="plus"></i> Add Certificate</button>';
-  showModal(s.firstName + ' ' + s.lastName, body, '<button class="btn btn-danger" onclick="deleteStaff(' + s.id + ')"><i data-lucide="trash-2"></i> Delete</button><button class="btn btn-secondary" onclick="closeModal()">Close</button>');
-}
-
-function deleteStaff(id) {
-  if (!confirm('Delete this staff member and all their certificates?')) return;
-  var data = getData();
-  data.staff = data.staff.filter(function(s){return s.id != id});
-  data.certificates = data.certificates.filter(function(c){return c.staffId != id});
-  setData(data);
-  closeModal();
-  toast('Staff member deleted', 'success');
-  renderStaffPage();
-}
-
-// ============ CERTIFICATES ============
-function renderCertificatesPage() {
-  document.getElementById('pageTitle').textContent = 'Certificates';
-  var data = getData();
-  var c = document.getElementById('pageContent');
-  var certs = data.certificates;
-
-  showTopAction('Add Certificate', 'award', function() { showAddCertModal(); });
-
-  if (certs.length === 0) {
-    c.innerHTML = '<div class="empty-state"><i data-lucide="award"></i><p>No certificates on file yet. Click "Add Certificate" to get started.</p></div>';
-    lucide.createIcons();
-    return;
+  .topbar__menu-btn {
+    display: block;
   }
 
-  var rows = certs.map(function(cert) {
-    var s = getStaff(cert.staffId);
-    var name = s ? (s.name || (s.firstName + ' ' + s.lastName)) : 'Unknown';
-    var siteNames = s ? (s.sites ? s.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean).join(', ') : '—') : '—';
-    return '<tr><td><strong>' + name + '</strong></td><td>' + cert.type + '</td><td>' + (cert.number||'—') + '</td><td>' + formatDate(cert.expiryDate) + '</td><td>' + statusBadge(certStatus(cert)) + '</td><td>' + siteNames + '</td><td><button class="btn btn-sm btn-ghost" onclick="editCert(' + cert.id + ')"><i data-lucide="pencil"></i></button> <button class="btn btn-sm btn-ghost" style="color:var(--color-danger)" onclick="deleteCertDirect(' + cert.id + ')"><i data-lucide="trash-2"></i></button></td></tr>';
-  }).join('');
-
-  c.innerHTML = '<div class="filter-bar"><select class="form-select" id="certFilter" onchange="filterCerts()"><option value="all">All Certificates</option><option value="expired">Expired</option><option value="warning">Expiring Soon</option><option value="valid">Valid</option></select></div><div class="table-container"><table id="certTable"><thead><tr><th>Staff</th><th>Type</th><th>Number</th><th>Expiry</th><th>Status</th><th>Sites</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-  lucide.createIcons();
-}
-
-function filterCerts() {
-  var filter = document.getElementById('certFilter').value;
-  var rows = document.querySelectorAll('#certTable tbody tr');
-  rows.forEach(function(row) {
-    if (filter === 'all') { row.style.display = ''; return; }
-    var badge = row.querySelector('.badge');
-    if (!badge) { row.style.display = ''; return; }
-    var text = badge.textContent.toLowerCase();
-    if (filter === 'expired' && text !== 'expired') row.style.display = 'none';
-    else if (filter === 'warning' && text !== 'expiring' && text !== 'critical') row.style.display = 'none';
-    else if (filter === 'valid' && text !== 'valid') row.style.display = 'none';
-    else row.style.display = '';
-  });
-}
-
-function showAddCertModal(staffId) {
-  var data = getData();
-  var staffOpts = data.staff.map(function(s){return '<option value="' + s.id + '"' + (s.id == staffId ? ' selected' : '') + '>' + s.firstName + ' ' + s.lastName + '</option>'}).join('');
-  var body = '<div class="form-group"><label>Staff Member *</label><select class="form-select" id="certStaff">' + staffOpts + '</select></div><div class="form-row"><div class="form-group"><label>Certificate Type *</label><input type="text" class="form-input" id="certType" placeholder="e.g. CSCS Card"></div><div class="form-group"><label>Certificate Number</label><input type="text" class="form-input" id="certNumber"></div></div><div class="form-row"><div class="form-group"><label>Issue Date</label><input type="date" class="form-input" id="certIssue"></div><div class="form-group"><label>Expiry Date *</label><input type="date" class="form-input" id="certExpiry"></div></div><div class="form-group"><label>Notes</label><textarea class="form-textarea" id="certNotes" rows="2"></textarea></div><div class="form-group"><label>Risk Assessment Photos</label><input type="file" class="form-input" id="certPhotos" accept="image/*" multiple><span class="form-hint">Upload photos of risk assessments or site conditions</span></div><div id="photoPreview" style="margin-top:8px"></div>';
-  var footer = '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveCert()">Save Certificate</button>';
-  showModal('Add Certificate', body, footer);
-  if (document.getElementById('certPhotos')) {
-    document.getElementById('certPhotos').onchange = function(e) {
-      var preview = document.getElementById('photoPreview');
-      preview.innerHTML = '';
-      Array.from(e.target.files).forEach(function(file) {
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-          var div = document.createElement('div');
-          div.style.cssText = 'display:inline-block;margin:4px;position:relative';
-          div.innerHTML = '<img src="' + ev.target.result + '" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">';
-          preview.appendChild(div);
-        };
-        reader.readAsDataURL(file);
-      });
-    };
-  }
-}
-
-function saveCert() {
-  var staffId = document.getElementById('certStaff').value;
-  var type = document.getElementById('certType').value.trim();
-  var expiry = document.getElementById('certExpiry').value;
-  if (!staffId || !type || !expiry) { toast('Staff, type, and expiry date are required', 'error'); return; }
-  var data = getData();
-  var photos = [];
-  var fileInput = document.getElementById('certPhotos');
-  if (fileInput && fileInput.files.length > 0) {
-    Array.from(fileInput.files).forEach(function(file) {
-      // Store photo references (in a real app, upload to server)
-      photos.push({ name: file.name, size: file.size });
-    });
-  }
-  data.certificates.push({
-    id: genId(),
-    staffId: parseInt(staffId),
-    type: type,
-    number: document.getElementById('certNumber').value.trim(),
-    issueDate: document.getElementById('certIssue').value,
-    expiryDate: expiry,
-    notes: document.getElementById('certNotes').value.trim(),
-    photos: photos
-  });
-  setData(data);
-  closeModal();
-  toast('Certificate added', 'success');
-  renderCertificatesPage();
-}
-
-function editCert(id) {
-  var data = getData();
-  var cert = data.certificates.find(function(c){return c.id == id});
-  if (!cert) return;
-  var staffOpts = data.staff.map(function(s){return '<option value="' + s.id + '"' + (s.id == cert.staffId ? ' selected' : '') + '>' + s.firstName + ' ' + s.lastName + '</option>'}).join('');
-  var body = '<div class="form-group"><label>Staff Member</label><select class="form-select" id="editCertStaff">' + staffOpts + '</select></div><div class="form-row"><div class="form-group"><label>Certificate Type</label><input type="text" class="form-input" id="editCertType" value="' + cert.type + '"></div><div class="form-group"><label>Certificate Number</label><input type="text" class="form-input" id="editCertNumber" value="' + (cert.number||'') + '"></div></div><div class="form-row"><div class="form-group"><label>Issue Date</label><input type="date" class="form-input" id="editCertIssue" value="' + (cert.issueDate||'') + '"></div><div class="form-group"><label>Expiry Date</label><input type="date" class="form-input" id="editCertExpiry" value="' + (cert.expiryDate||'') + '"></div></div><div class="form-group"><label>Notes</label><textarea class="form-textarea" id="editCertNotes" rows="2">' + (cert.notes||'') + '</textarea></div>';
-  var footer = '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="updateCert(' + id + ')">Update</button>';
-  showModal('Edit Certificate', body, footer);
-}
-
-function updateCert(id) {
-  var data = getData();
-  var idx = data.certificates.findIndex(function(c){return c.id == id});
-  if (idx === -1) return;
-  data.certificates[idx] = Object.assign({}, data.certificates[idx], {
-    staffId: parseInt(document.getElementById('editCertStaff').value),
-    type: document.getElementById('editCertType').value.trim(),
-    number: document.getElementById('editCertNumber').value.trim(),
-    issueDate: document.getElementById('editCertIssue').value,
-    expiryDate: document.getElementById('editCertExpiry').value,
-    notes: document.getElementById('editCertNotes').value.trim()
-  });
-  setData(data);
-  closeModal();
-  toast('Certificate updated', 'success');
-  renderCertificatesPage();
-}
-
-function deleteCert(id, staffId) {
-  if (!confirm('Delete this certificate?')) return;
-  var data = getData();
-  data.certificates = data.certificates.filter(function(c){return c.id != id});
-  setData(data);
-  closeModal();
-  toast('Certificate deleted', 'success');
-  showStaffDetail(staffId);
-}
-
-function deleteCertDirect(id) {
-  if (!confirm('Delete this certificate?')) return;
-  var data = getData();
-  data.certificates = data.certificates.filter(function(c){return c.id != id});
-  setData(data);
-  toast('Certificate deleted', 'success');
-  renderCertificatesPage();
-}
-
-// ============ SITES ============
-function renderSitesPage() {
-  document.getElementById('pageTitle').textContent = 'Sites';
-  var data = getData();
-  var c = document.getElementById('pageContent');
-
-  if (data.sites.length === 0) {
-    c.innerHTML = '<div class="empty-state"><i data-lucide="building-2"></i><p>No sites created yet. Add your first site to begin.</p><button class="btn btn-primary" onclick="showAddSiteModal()"><i data-lucide="plus"></i> Add Site</button></div>';
-    lucide.createIcons();
-    showTopAction('Add Site', 'showAddSiteModal');
-    return;
+  .page-content {
+    padding: 16px;
   }
 
-  var rows = data.sites.map(function(site) {
-    var staffCount = data.staff.filter(function(s){return s.sites.indexOf(site.id) !== -1}).length;
-    var certs = [];
-    data.staff.filter(function(s){return s.sites.indexOf(site.id) !== -1}).forEach(function(s){getCertsForStaff(s.id).forEach(function(c){certs.push(c)})});
-    var expired = certs.filter(function(c){return daysUntilExpiry(c)<0}).length;
-    return '<tr style="cursor:pointer" onclick="showSiteDetail(' + site.id + ')"><td><strong>' + site.name + '</strong></td><td>' + (site.address || '—') + '</td><td>' + (site.manager || '—') + '</td><td>' + staffCount + '</td><td>' + (expired > 0 ? '<span class="badge badge-danger">' + expired + ' expired</span>' : '<span class="badge badge-success">Compliant</span>') + '</td></tr>';
-  }).join('');
-
-  c.innerHTML = '<div class="filter-bar"><button class="btn btn-primary" onclick="showAddSiteModal()"><i data-lucide="plus"></i> Add Site</button></div><div class="table-container"><table><thead><tr><th>Site Name</th><th>Address</th><th>Manager</th><th>Staff</th><th>Compliance</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-  showTopAction('Add Site', 'showAddSiteModal');
-  lucide.createIcons();
-}
-
-function showAddSiteModal() {
-  var body = '<div class="form-group"><label>Site Name *</label><input type="text" class="form-input" id="siteName" required></div><div class="form-group"><label>Address</label><input type="text" class="form-input" id="siteAddress"></div><div class="form-group"><label>Postcode</label><input type="text" class="form-input" id="sitePostcode"></div><div class="form-group"><label>Manager</label><input type="text" class="form-input" id="siteManager"></div><div class="form-group"><label>Notes</label><textarea class="form-textarea" id="siteNotes" rows="3"></textarea></div>';
-  var footer = '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSite()">Save Site</button>';
-  showModal('Add New Site', body, footer);
-}
-
-function saveSite() {
-  var name = document.getElementById('siteName').value.trim();
-  if (!name) { toast('Site name is required', 'error'); return; }
-  var data = getData();
-  data.sites.push({
-    id: genId(),
-    name: name,
-    address: document.getElementById('siteAddress').value.trim(),
-    postcode: document.getElementById('sitePostcode').value.trim(),
-    manager: document.getElementById('siteManager').value.trim(),
-    notes: document.getElementById('siteNotes').value.trim()
-  });
-  setData(data);
-  closeModal();
-  toast('Site added', 'success');
-  renderSitesPage();
-}
-
-function showSiteDetail(id) {
-  var site = getSite(id);
-  if (!site) return;
-  var data = getData();
-  var staff = data.staff.filter(function(s){return s.sites.indexOf(site.id) !== -1});
-  var staffList = staff.length > 0 ? staff.map(function(s){return '<span class="badge badge-info" style="cursor:pointer" onclick="closeModal();showStaffDetail(' + s.id + ')">' + s.firstName + ' ' + s.lastName + '</span>'}).join(' ') : '<span style="color:var(--text-muted)">No staff assigned</span>';
-  var body = '<div style="margin-bottom:16px"><p style="font-size:.9rem;color:var(--text-secondary)">Address: ' + (site.address || '—') + (site.postcode ? ', ' + site.postcode : '') + '<br>Manager: ' + (site.manager || '—') + '<br>Notes: ' + (site.notes || '—') + '</p></div><h4 style="margin-bottom:8px">Assigned Staff</h4><div style="display:flex;flex-wrap:wrap;gap:6px">' + staffList + '</div>';
-  var footer = '<button class="btn btn-danger" onclick="deleteSite(' + site.id + ')"><i data-lucide="trash-2"></i> Delete</button><button class="btn btn-secondary" onclick="closeModal()">Close</button>';
-  showModal(site.name, body, footer);
-}
-
-function deleteSite(id) {
-  if (!confirm('Delete this site? Staff will be unassigned.')) return;
-  var data = getData();
-  data.sites = data.sites.filter(function(s){return s.id != id});
-  data.staff.forEach(function(s){ s.sites = s.sites.filter(function(sid){return sid != id}) });
-  setData(data);
-  closeModal();
-  toast('Site deleted', 'success');
-  renderSitesPage();
-}
-
-// ============ NOTIFICATIONS ============
-function renderNotificationsPage() {
-  document.getElementById('pageTitle').textContent = 'Notifications';
-  var data = getData();
-  var c = document.getElementById('pageContent');
-  var items = [];
-
-  data.certificates.forEach(function(cert) {
-    var s = getStaff(cert.staffId);
-    var status = certStatus(cert);
-    if (status === 'expired') {
-      items.push({ type: 'danger', icon: 'alert-circle', text: (s ? s.firstName + ' ' + s.lastName : 'Unknown') + ' — ' + cert.type + ' has expired', date: cert.expiryDate });
-    } else if (status === 'critical' || status === 'warning') {
-      items.push({ type: 'warning', icon: 'clock', text: (s ? s.firstName + ' ' + s.lastName : 'Unknown') + ' — ' + cert.type + ' expires in ' + daysUntilExpiry(cert) + ' days', date: cert.expiryDate });
-    }
-  });
-
-  items.sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
-
-  if (items.length === 0) {
-    c.innerHTML = '<div class="empty-state"><i data-lucide="bell-off"></i><p>No active notifications. All certificates are in order.</p></div>';
-    lucide.createIcons();
-    hideTopAction();
-    return;
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 
-  var list = items.map(function(item) {
-    return '<div class="alert alert-' + item.type + '" style="margin-bottom:8px"><i data-lucide="' + item.icon + '"></i><div><strong>' + item.text + '</strong><br><span style="font-size:.8rem;opacity:.7">' + formatDate(item.date) + '</span></div></div>';
-  }).join('');
-
-  c.innerHTML = list;
-  hideTopAction();
-  lucide.createIcons();
-}
-
-// ============ REPORTS ============
-function renderReportsPage() {
-  document.getElementById('pageTitle').textContent = 'Reports';
-  var data = getData();
-  var c = document.getElementById('pageContent');
-  c.innerHTML = '<div class="tabs"><button class="tab-btn active" data-tab="report-employee">Employee Report</button><button class="tab-btn" data-tab="report-site">Site Report</button><button class="tab-btn" data-tab="report-expiry">Expiry Report</button></div>'+
-  '<div id="report-employee" class="report-tab"><div class="filter-bar"><select class="form-select" id="reportEmpSelect"><option value="">Select an employee...</option>'+data.staff.map(function(s){return '<option value="'+s.id+'">'+s.firstName+' '+s.lastName+'</option>'}).join('')+'</select><button class="btn btn-sm btn-primary" onclick="generateEmployeeReport()"><i data-lucide="file-text"></i> Generate</button><button class="btn btn-sm btn-secondary" onclick="window.print()"><i data-lucide="printer"></i> Print</button></div><div id="employeeReportOutput"></div></div>'+
-  '<div id="report-site" class="report-tab" style="display:none"><div class="filter-bar"><select class="form-select" id="reportSiteSelect"><option value="">Select a site...</option>'+data.sites.map(function(s){return '<option value="'+s.id+'">'+s.name+'</option>'}).join('')+'</select><button class="btn btn-sm btn-primary" onclick="generateSiteReport()"><i data-lucide="file-text"></i> Generate</button><button class="btn btn-sm btn-secondary" onclick="window.print()"><i data-lucide="printer"></i> Print</button></div><div id="siteReportOutput"></div></div>'+
-  '<div id="report-expiry" class="report-tab" style="display:none"><div class="filter-bar"><select class="form-select" id="reportExpiryDays"><option value="7">Next 7 days</option><option value="14">Next 14 days</option><option value="30" selected>Next 30 days</option><option value="60">Next 60 days</option><option value="90">Next 90 days</option></select><button class="btn btn-sm btn-primary" onclick="generateExpiryReport()"><i data-lucide="file-text"></i> Generate</button><button class="btn btn-sm btn-secondary" onclick="window.print()"><i data-lucide="printer"></i> Print</button><button class="btn btn-sm btn-success" onclick="emailExpiryReport()"><i data-lucide="mail"></i> Email Report</button></div><div id="expiryReportOutput"></div></div>';
-  document.querySelectorAll('.tab-btn').forEach(function(btn){
-    btn.onclick = function(){ document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')}); document.querySelectorAll('.report-tab').forEach(function(t){t.style.display='none'}); btn.classList.add('active'); document.getElementById(btn.dataset.tab).style.display='block'; };
-  });
-  hideTopAction();
-  lucide.createIcons();
-}
-
-function generateEmployeeReport() {
-  var sid = document.getElementById('reportEmpSelect').value;
-  if (!sid) { toast('Please select an employee','warning'); return; }
-  var s = getStaff(sid); if (!s) return;
-  var certs = getCertsForStaff(s.id);
-  var sn = s.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean);
-  var data = getData();
-  document.getElementById('employeeReportOutput').innerHTML = '<div class="card"><div class="card-header" style="background:var(--color-primary);color:#fff"><div><h3 style="color:#fff">'+data.settings.companyName+'</h3><p style="font-size:.8rem;opacity:.8">Employee Compliance Report</p></div><span style="font-size:.8rem">Generated: '+formatDate(new Date().toISOString())+'</span></div><div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px"><div><h4>Employee Details</h4><table style="font-size:.85rem"><tr><td style="color:var(--text-secondary);width:120px">Name:</td><td><strong>'+s.firstName+' '+s.lastName+'</strong></td></tr><tr><td style="color:var(--text-secondary)">Phone:</td><td>'+(s.phone||'\u2014')+'</td></tr><tr><td style="color:var(--text-secondary)">Email:</td><td>'+(s.email||'\u2014')+'</td></tr><tr><td style="color:var(--text-secondary)">Start Date:</td><td>'+formatDate(s.startDate)+'</td></tr><tr><td style="color:var(--text-secondary)">TK ID:</td><td>'+(s.timekeeperId||'\u2014')+'</td></tr></table></div><div><h4>Assignments</h4><p style="font-size:.85rem;margin-bottom:4px"><strong>Trades:</strong> '+(s.trades.join(', ')||'None')+'</p><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">'+(sn.length?sn.map(function(n){return '<span class="badge badge-neutral">'+n+'</span>'}).join(''):'<span style="color:var(--text-muted)">None assigned</span>')+'</div></div></div><h4 style="margin-bottom:10px">Certificate Compliance ('+certs.length+' total)</h4>'+(certs.length===0?'<p style="color:var(--text-muted)">No certificates on file</p>':'<table style="font-size:.85rem"><thead><tr><th>Type</th><th>Number</th><th>Issue</th><th>Expiry</th><th>Status</th></tr></thead><tbody>'+certs.map(function(c){return '<tr><td><strong>'+c.type+'</strong></td><td>'+(c.number||'\u2014')+'</td><td>'+formatDate(c.issueDate)+'</td><td>'+formatDate(c.expiryDate)+'</td><td>'+statusBadge(certStatus(c))+'</td></tr>'}).join('')+'</tbody></table>')+(certs.some(function(c){return certStatus(c)!=='valid'})?'<div class="alert alert-danger" style="margin-top:16px"><i data-lucide="alert-circle"></i><div><strong>Compliance Issues</strong><p>'+certs.filter(function(c){return certStatus(c)==='expired'}).length+' expired, '+certs.filter(function(c){return certStatus(c)==='critical'||certStatus(c)==='warning'}).length+' expiring soon.</p></div></div>':'<div class="alert alert-success" style="margin-top:16px"><i data-lucide="check-circle"></i><div><strong>Compliant</strong> \u2014 All certificates up to date.</div></div>')+'</div></div>';
-  lucide.createIcons();
-}
-
-function generateSiteReport() {
-  var sid = document.getElementById('reportSiteSelect').value;
-  if (!sid) { toast('Please select a site','warning'); return; }
-  var site = getSite(sid); if (!site) return;
-  var data = getData();
-  var sos = data.staff.filter(function(s){return s.sites.indexOf(sid)!==-1});
-  var expired=0, warning=0, valid=0;
-  sos.forEach(function(s){getCertsForStaff(s.id).forEach(function(c){var st=certStatus(c);if(st==='expired')expired++;else if(st==='critical'||st==='warning')warning++;else if(st==='valid')valid++})});
-  document.getElementById('siteReportOutput').innerHTML = '<div class="card"><div class="card-header" style="background:var(--color-primary);color:#fff"><div><h3 style="color:#fff">'+data.settings.companyName+'</h3><p style="font-size:.8rem;opacity:.8">Site Compliance Report</p></div><span style="font-size:.8rem">Generated: '+formatDate(new Date().toISOString())+'</span></div><div class="card-body"><h4>'+site.name+'</h4><p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:16px">'+(site.address||'')+(site.postcode?' '+site.postcode:'')+' | Manager: '+(site.manager||'\u2014')+'</p><div class="stats-grid" style="margin-bottom:20px"><div class="stat-card"><div class="stat-icon info"><i data-lucide="users"></i></div><div class="stat-info"><h3>'+sos.length+'</h3><p>Staff</p></div></div><div class="stat-card"><div class="stat-icon success"><i data-lucide="shield-check"></i></div><div class="stat-info"><h3>'+valid+'</h3><p>Valid</p></div></div><div class="stat-card"><div class="stat-icon warning"><i data-lucide="clock"></i></div><div class="stat-info"><h3>'+warning+'</h3><p>Expiring</p></div></div><div class="stat-card"><div class="stat-icon danger"><i data-lucide="alert-triangle"></i></div><div class="stat-info"><h3>'+expired+'</h3><p>Expired</p></div></div></div><h4 style="margin-bottom:10px">Staff & Certificates</h4>'+(sos.length===0?'<p style="color:var(--text-muted)">No staff assigned</p>':'<div class="table-container"><table style="font-size:.85rem"><thead><tr><th>Staff</th><th>Trades</th><th>Certs</th></tr></thead><tbody>'+sos.map(function(s){var certs=getCertsForStaff(s.id);return '<tr><td><strong>'+s.firstName+' '+s.lastName+'</strong></td><td>'+s.trades.map(function(t){return '<span class="badge badge-info">'+t+'</span>'}).join(' ')+'</td><td>'+certs.length+'</td></tr>'}).join('')+'</tbody></table></div>')+'</div></div>';
-  lucide.createIcons();
-}
-
-function generateExpiryReport() {
-  var days = parseInt(document.getElementById('reportExpiryDays').value);
-  var expiring = getExpiringCerts(days);
-  var expired = getExpiredCerts();
-  var data = getData();
-  document.getElementById('expiryReportOutput').innerHTML = '<div class="card"><div class="card-header" style="background:var(--color-primary);color:#fff"><div><h3 style="color:#fff">'+data.settings.companyName+'</h3><p style="font-size:.8rem;opacity:.8">Certificate Expiry Report \u2014 Next '+days+' Days</p></div><span style="font-size:.8rem">Generated: '+formatDate(new Date().toISOString())+'</span></div><div class="card-body"><p style="margin-bottom:16px;font-size:.9rem"><strong>'+expired.length+'</strong> expired, <strong>'+expiring.length+'</strong> expiring within '+days+' days.</p>'+(expired.length>0?'<h4 style="color:var(--color-danger);margin-bottom:10px">Expired</h4><div class="table-container"><table style="font-size:.85rem"><thead><tr><th>Staff</th><th>Sites</th><th>Certificate</th><th>Expiry</th><th>Overdue</th></tr></thead><tbody>'+expired.map(function(c){var staff=getStaff(c.staffId);var sn=staff?staff.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean).join(', '):'\u2014';return '<tr><td><strong>'+(staff?staff.firstName+' '+staff.lastName:'Unknown')+'</strong></td><td>'+sn+'</td><td>'+c.type+'</td><td>'+formatDate(c.expiryDate)+'</td><td>'+Math.abs(daysUntilExpiry(c))+' days</td></tr>'}).join('')+'</tbody></table></div>':'')+(expiring.length>0?'<h4 style="color:var(--color-warning);margin-top:20px;margin-bottom:10px">Expiring Within '+days+' Days</h4><div class="table-container"><table style="font-size:.85rem"><thead><tr><th>Staff</th><th>Sites</th><th>Certificate</th><th>Expiry</th><th>Days Left</th></tr></thead><tbody>'+expiring.map(function(c){var staff=getStaff(c.staffId);var sn=staff?staff.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean).join(', '):'\u2014';return '<tr><td><strong>'+(staff?staff.firstName+' '+staff.lastName:'Unknown')+'</strong></td><td>'+sn+'</td><td>'+c.type+'</td><td>'+formatDate(c.expiryDate)+'</td><td>'+daysUntilExpiry(c)+' days</td></tr>'}).join('')+'</tbody></table></div>':'')+'</div></div>';
-  lucide.createIcons();
-}
-
-function emailExpiryReport() {
-  var days = parseInt(document.getElementById('reportExpiryDays').value);
-  var expiring = getExpiringCerts(days);
-  var expired = getExpiredCerts();
-  var data = getData();
-  if (expired.length === 0 && expiring.length === 0) { toast('No certificates to report','info'); return; }
-  var subject = data.settings.companyName + ' \u2014 Certificate Expiry Report ('+expired.length+' expired, '+expiring.length+' expiring)';
-  var body = 'Certificate Expiry Report\nGenerated: '+formatDate(new Date().toISOString())+'\n'+'='.repeat(50)+'\n\n';
-  if (expired.length > 0) {
-    body += 'EXPIRED ('+expired.length+'):\n';
-    expired.forEach(function(c){var staff=getStaff(c.staffId);var sn=staff?staff.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean).join(', '):'\u2014';body+='  - '+(staff?staff.firstName+' '+staff.lastName:'Unknown')+' | '+c.type+' | Site: '+sn+' | Expired: '+formatDate(c.expiryDate)+'\n'});
-    body += '\n';
+  .form-row {
+    grid-template-columns: 1fr;
   }
-  if (expiring.length > 0) {
-    body += 'EXPIRING WITHIN '+days+' DAYS ('+expiring.length+'):\n';
-    expiring.forEach(function(c){var staff=getStaff(c.staffId);var sn=staff?staff.sites.map(function(i){var si=getSite(i);return si?si.name:''}).filter(Boolean).join(', '):'\u2014';body+='  - '+(staff?staff.firstName+' '+staff.lastName:'Unknown')+' | '+c.type+' | Site: '+sn+' | Expires: '+formatDate(c.expiryDate)+' ('+daysUntilExpiry(c)+' days)\n'});
+
+  .notifications-pane {
+    width: 100%;
   }
-  window.open('mailto:'+data.settings.emailRecipients.join(',')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
-  toast('Email client opened with report','success');
-}
 
-// ============ SETTINGS ============
-function renderSettingsPage() {
-  document.getElementById('pageTitle').textContent = 'Settings';
-  var data = getData();
-  var c = document.getElementById('pageContent');
-  c.innerHTML = '<div class="tabs"><button class="tab-btn active" data-tab="settings-general">General</button><button class="tab-btn" data-tab="settings-email">Email</button><button class="tab-btn" data-tab="settings-timekeeper">Time Keeper Import</button><button class="tab-btn" data-tab="settings-data">Data Management</button></div>'+
-  '<div id="settings-general" class="settings-tab"><div class="card"><div class="card-header"><h3>Company Settings</h3></div><div class="card-body"><div class="form-row"><div class="form-group"><label>Company Name</label><input type="text" class="form-input" id="settCompanyName" value="'+(data.settings.companyName||'')+'"></div><div class="form-group"><label>Notify Days Before Expiry</label><input type="number" class="form-input" id="settNotifyDays" value="'+(data.settings.notifyDaysBefore||30)+'" min="1" max="365"><span class="form-hint">Days before certificate expiry to trigger alerts</span></div></div><button class="btn btn-primary" id="saveGeneralBtn"><i data-lucide="save"></i> Save Settings</button></div></div></div>'+
-  '<div id="settings-email" class="settings-tab" style="display:none"><div class="card"><div class="card-header"><h3>Email Notification Settings</h3></div><div class="card-body"><div class="form-group"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="settEmailEnabled" '+(data.settings.emailNotifications?'checked':'')+'> Enable email notifications</label></div><div class="form-group"><label>Email Recipients (one per line)</label><textarea class="form-textarea" id="settEmailRecipients" rows="4">'+(data.settings.emailRecipients||[]).join('\n')+'</textarea><span class="form-hint">These addresses receive certificate expiry alerts</span></div><button class="btn btn-primary" id="saveEmailBtn"><i data-lucide="save"></i> Save</button> <button class="btn btn-secondary" id="testEmailBtn"><i data-lucide="mail"></i> Test Email</button></div></div></div>'+
-  '<div id="settings-timekeeper" class="settings-tab" style="display:none"><div class="card"><div class="card-header"><h3>Time Keeper Software Import</h3></div><div class="card-body"><div class="alert alert-info" style="margin-bottom:16px"><i data-lucide="info"></i><div><strong>Import staff location data from your time keeper software.</strong><p style="font-size:.85rem;margin-top:4px">Upload a CSV with columns: <code>staffId, firstName, lastName, siteName, date</code></p></div></div>'+(data.settings.lastTimeKeeperImport?'<p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:12px">Last import: '+formatDate(data.settings.lastTimeKeeperImport)+'</p>':'')+'<div class="form-group"><label>Upload CSV File</label><input type="file" class="form-input" id="tkFileInput" accept=".csv,.txt"></div><div id="tkPreview" style="display:none"><h4 style="margin:16px 0 8px">Preview</h4><div class="table-container" id="tkPreviewTable"></div><div style="margin-top:12px"><button class="btn btn-primary" id="tkImportBtn"><i data-lucide="download"></i> Import Data</button></div></div><div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)"><h4 style="margin-bottom:8px">Or Paste CSV Data</h4><textarea class="form-textarea" id="tkPasteArea" rows="6" placeholder="staffId,firstName,lastName,siteName,date\nTK001,John,Smith,Riverside Towers,2024-01-15"></textarea><button class="btn btn-primary" id="tkPasteImportBtn" style="margin-top:8px"><i data-lucide="download"></i> Import from Paste</button></div><div id="tkImportResult" style="display:none"></div></div></div></div>'+
-  '<div id="settings-data" class="settings-tab" style="display:none"><div class="card"><div class="card-header"><h3>Data Management</h3></div><div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div><h4 style="margin-bottom:8px">Export Data</h4><p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:12px">Download all data as a JSON backup.</p><button class="btn btn-primary" id="exportDataBtn2"><i data-lucide="download"></i> Export All Data</button></div><div><h4 style="margin-bottom:8px">Import Data</h4><p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:12px">Restore from a backup file.</p><input type="file" class="form-input" id="importDataInput" accept=".json" style="margin-bottom:8px"><button class="btn btn-secondary" id="importDataBtn"><i data-lucide="upload"></i> Import Data</button></div></div><div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)"><h4 style="margin-bottom:8px;color:var(--color-danger)">Danger Zone</h4><p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:12px">Load sample data to explore the platform.</p><button class="btn btn-secondary" id="loadDemoBtn"><i data-lucide="database"></i> Load Demo Data</button></div></div></div></div>';
-
-  document.querySelectorAll('.tab-btn').forEach(function(btn){
-    btn.onclick = function(){ document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')}); document.querySelectorAll('.settings-tab').forEach(function(t){t.style.display='none'}); btn.classList.add('active'); document.getElementById(btn.dataset.tab).style.display='block'; };
-  });
-
-  document.getElementById('saveGeneralBtn').onclick = function(){
-    var s = getData().settings;
-    setData({settings:Object.assign({},s,{companyName:document.getElementById('settCompanyName').value.trim(),notifyDaysBefore:parseInt(document.getElementById('settNotifyDays').value)||30})});
-    toast('Settings saved','success');
-  };
-  document.getElementById('saveEmailBtn').onclick = function(){
-    var s = getData().settings;
-    var rec = document.getElementById('settEmailRecipients').value.split('\n').map(function(r){return r.trim()}).filter(Boolean);
-    setData({settings:Object.assign({},s,{emailNotifications:document.getElementById('settEmailEnabled').checked,emailRecipients:rec})});
-    toast('Email settings saved','success');
-  };
-  document.getElementById('testEmailBtn').onclick = function(){
-    var s = getData().settings;
-    if (!s.emailRecipients || !s.emailRecipients.length) { toast('No email recipients configured','error'); return; }
-    window.open('mailto:'+s.emailRecipients[0]+'?subject='+encodeURIComponent('Test \u2014 H&S Platform')+'&body='+encodeURIComponent('Test email from the H&S Platform.'));
-    toast('Test email opened','success');
-  };
-  document.getElementById('tkFileInput').onchange = function(e){ handleTKFile(e.target.files[0]); };
-  document.getElementById('tkPasteImportBtn').onclick = function(){
-    var csv = document.getElementById('tkPasteArea').value.trim();
-    if (!csv) { toast('Please paste CSV data','error'); return; }
-    processTKCSV(csv);
-  };
-  document.getElementById('exportDataBtn2').onclick = exportAllData;
-  document.getElementById('importDataBtn').onclick = function(){
-    var file = document.getElementById('importDataInput').files[0];
-    if (!file) { toast('Please select a file','error'); return; }
-    var reader = new FileReader();
-    reader.onload = function(e){
-      try { var imported = JSON.parse(e.target.result); setData(imported); toast('Data imported. Reloading...','success'); setTimeout(function(){location.reload()},1000); }
-      catch(ex) { toast('Invalid JSON file','error'); }
-    };
-    reader.readAsText(file);
-  };
-  document.getElementById('loadDemoBtn').onclick = function(){
-    seedDemoData(); toast('Demo data loaded. Reloading...','success'); setTimeout(function(){location.reload()},1000);
-  };
-  lucide.createIcons();
-}
-
-function handleTKFile(file) {
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) { processTKCSV(e.target.result); };
-  reader.readAsText(file);
-}
-
-function processTKCSV(csvText) {
-  var lines = csvText.split('\n').map(function(l){return l.trim()}).filter(Boolean);
-  if (lines.length < 2) { toast('CSV must have a header and data rows','error'); return; }
-  var headers = lines[0].toLowerCase().split(',').map(function(h){return h.trim()});
-  var records = [];
-  for (var i = 1; i < lines.length; i++) {
-    var vals = lines[i].split(',').map(function(v){return v.trim()});
-    if (vals.length < headers.length) continue;
-    var rec = {};
-    headers.forEach(function(h, idx){ rec[h] = vals[idx]; });
-    records.push({ staffId:rec.staffid||rec.staff_id||rec.id||'', firstName:rec.firstname||rec.first_name||'', lastName:rec.lastname||rec.last_name||'', siteName:rec.sitename||rec.site_name||rec.site||'', date:rec.date||rec.timestamp||'' });
+  .modal {
+    max-width: 100%;
+    margin: 16px;
   }
-  document.getElementById('tkPreview').style.display = 'block';
-  document.getElementById('tkPreviewTable').innerHTML = '<table><thead><tr>'+headers.map(function(h){return '<th>'+h+'</th>'}).join('')+'</tr></thead><tbody>'+records.slice(0,10).map(function(r){return '<tr><td>'+r.staffId+'</td><td>'+r.firstName+'</td><td>'+r.lastName+'</td><td>'+r.siteName+'</td><td>'+r.date+'</td></tr>'}).join('')+(records.length>10?'<tr><td colspan="'+headers.length+'" style="color:var(--text-muted)">... and '+(records.length-10)+' more</td></tr>':'')+'</tbody></table>';
-  document.getElementById('tkImportBtn').onclick = function(){
-    var result = importTimeKeeperData(records);
-    toast('Imported '+result.imported+' records across '+result.sites.length+' site(s)','success');
-    document.getElementById('tkImportResult').style.display = 'block';
-    document.getElementById('tkImportResult').innerHTML = '<div class="alert alert-success"><i data-lucide="check-circle"></i><div><strong>Import Complete!</strong> '+result.imported+' records imported. Sites: '+result.sites.join(', ')+'</div></div>';
-    lucide.createIcons();
-  };
 }
-
-// ============ NAVIGATION & INIT ============
-var pages = {
-  dashboard: renderDashboard,
-  staff: renderStaffPage,
-  certificates: renderCertificatesPage,
-  sites: renderSitesPage,
-  notifications: renderNotificationsPage,
-  reports: renderReportsPage,
-  settings: renderSettingsPage
-};
-
-var currentPage = 'dashboard';
-
-function navigateTo(page) {
-  if (!pages[page]) return;
-  currentPage = page;
-  document.querySelectorAll('.nav-item').forEach(function(item) {
-    item.classList.toggle('active', item.dataset.page === page);
-  });
-  pages[page]();
-  // Close mobile sidebar
-  document.getElementById('sidebar').classList.remove('open');
-}
-
-function showTopAction(label, onclick) {
-  var btn = document.getElementById('topAction');
-  btn.style.display = '';
-  btn.textContent = label;
-  btn.onclick = function() { window[onclick](); };
-}
-
-function hideTopAction() {
-  document.getElementById('topAction').style.display = 'none';
-}
-
-// Sidebar navigation
-document.querySelectorAll('.nav-item').forEach(function(item) {
-  item.addEventListener('click', function() {
-    navigateTo(item.dataset.page);
-  });
-});
-
-// Initial render
-lucide.createIcons();
-navigateTo('dashboard');
-</script>
-</body>
-</html>
