@@ -3,105 +3,991 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SafeSite — Construction Health & Safety Platform</title>
+  <title>SafeSite — Construction H&amp;S Platform</title>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --c-primary:#e67e22;--c-primary-dark:#d35400;--c-primary-light:#f39c12;
+      --c-bg:#f0f2f5;--c-sidebar:#1a1d23;--c-sidebar-text:#a0a4ad;
+      --c-surface:#fff;--c-text:#1a1d23;--c-muted:#6b7280;--c-border:#e5e7eb;
+      --c-success:#10b981;--c-warning:#f59e0b;--c-danger:#ef4444;--c-info:#3b82f6;
+      --radius:8px;--radius-lg:12px;
+      --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+      --shadow-lg:0 4px 12px rgba(0,0,0,.08);
+      --sidebar-w:260px;--topbar-h:64px;
+    }
+    html{font-size:16px}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.5}
+
+    /* ── Layout ────────────────────────────────────── */
+    .app{display:flex;min-height:100vh}
+
+    /* ── Sidebar ───────────────────────────────────── */
+    .sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--c-sidebar);color:var(--c-sidebar-text);display:flex;flex-direction:column;z-index:100;transition:transform .3s}
+    .sidebar__head{display:flex;align-items:center;gap:10px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .sidebar__logo{width:32px;height:32px;color:var(--c-primary)}
+    .sidebar__name{color:#fff;font-size:1.1rem;font-weight:700}
+    .sidebar__nav{flex:1;padding:12px;display:flex;flex-direction:column;gap:2px}
+    .sidebar__link{display:flex;align-items:center;gap:12px;padding:10px 16px;border:none;border-radius:var(--radius);background:0;color:var(--c-sidebar-text);font-size:.9rem;cursor:pointer;width:100%;text-align:left;transition:background .15s}
+    .sidebar__link:hover{background:rgba(255,255,255,.06);color:#fff}
+    .sidebar__link.active{background:rgba(230,126,34,.15);color:var(--c-primary)}
+    .sidebar__link i{width:20px;height:20px;flex-shrink:0}
+    .sidebar__badge{margin-left:auto;background:var(--c-danger);color:#fff;font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:10px;min-width:18px;text-align:center}
+    .sidebar__foot{padding:16px;border-top:1px solid rgba(255,255,255,.08)}
+    .sidebar__user{display:flex;align-items:center;gap:10px}
+    .sidebar__avatar{width:36px;height:36px;border-radius:50%;background:#b84c00;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:600}
+    .sidebar__uname{color:#fff;font-size:.85rem;font-weight:500}
+    .sidebar__urole{font-size:.75rem;color:#b0b4bd}
+
+    /* ── Main content ──────────────────────────────── */
+    .main{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh}
+    .topbar{display:flex;align-items:center;gap:16px;padding:0 32px;height:var(--topbar-h);background:var(--c-surface);border-bottom:1px solid var(--c-border);position:sticky;top:0;z-index:50}
+    .topbar__title{font-size:1.25rem;font-weight:600;flex:1}
+    .topbar__actions{display:flex;align-items:center;gap:8px}
+    .topbar__btn{position:relative;background:0;border:0;cursor:pointer;padding:8px;border-radius:var(--radius);color:var(--c-muted);transition:background .15s}
+    .topbar__btn:hover{background:var(--c-bg);color:var(--c-text)}
+    .topbar__btn i{width:20px;height:20px}
+    .topbar__badge{position:absolute;top:2px;right:2px;width:16px;height:16px;background:var(--c-danger);color:#fff;border-radius:50%;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+    .content{flex:1;padding:24px 32px}
+
+    /* ── Cards / Stats ─────────────────────────────── */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+    .stat{background:var(--c-surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px}
+    .stat__icon{width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .stat__icon i{width:24px;height:24px}
+    .stat__icon--orange{background:rgba(230,126,34,.12);color:var(--c-primary)}
+    .stat__icon--blue{background:rgba(59,130,246,.12);color:var(--c-info)}
+    .stat__icon--green{background:rgba(16,185,129,.12);color:var(--c-success)}
+    .stat__icon--red{background:rgba(239,68,68,.12);color:var(--c-danger)}
+    .stat__icon--yellow{background:rgba(245,158,11,.12);color:var(--c-warning)}
+    .stat__num{font-size:1.5rem;font-weight:700;line-height:1.2}
+    .stat__label{font-size:.8rem;color:var(--c-muted)}
+
+    /* ── Panel / Table ─────────────────────────────── */
+    .panel{background:var(--c-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:24px;overflow:hidden}
+    .panel__head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--c-border);flex-wrap:wrap;gap:12px}
+    .panel__head h3{font-size:1rem;font-weight:600}
+    .panel__body{padding:0}
+    table{width:100%;border-collapse:collapse}
+    th{text-align:left;padding:12px 16px;font-size:.75rem;font-weight:600;color:var(--c-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--c-border);background:var(--c-bg)}
+    td{padding:12px 16px;border-bottom:1px solid var(--c-border);font-size:.875rem;vertical-align:middle}
+    tr:last-child td{border-bottom:0}
+    tr:hover td{background:rgba(0,0,0,.015)}
+
+    /* ── Buttons ───────────────────────────────────── */
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:var(--radius);font-size:.85rem;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
+    .btn i{width:16px;height:16px}
+    .btn--primary{background:var(--c-primary);color:#fff}.btn--primary:hover{background:var(--c-primary-dark)}
+    .btn--secondary{background:var(--c-bg);color:var(--c-text);border:1px solid var(--c-border)}.btn--secondary:hover{background:var(--c-border)}
+    .btn--danger{background:var(--c-danger);color:#fff}.btn--danger:hover{background:#dc2626}
+    .btn--success{background:var(--c-success);color:#fff}.btn--success:hover{background:#059669}
+    .btn--sm{padding:5px 10px;font-size:.78rem}
+    .btn--ghost{background:0;color:var(--c-muted);padding:6px 10px}.btn--ghost:hover{background:var(--c-bg);color:var(--c-text)}
+    .btn-group{display:flex;gap:6px;flex-wrap:wrap}
+
+    /* ── Forms ─────────────────────────────────────── */
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:.8rem;font-weight:500;margin-bottom:4px;color:var(--c-muted)}
+    .form-input,.form-select{width:100%;padding:8px 12px;border:1px solid var(--c-border);border-radius:var(--radius);font-size:.875rem;font-family:inherit;transition:border .15s;background:var(--c-surface);color:var(--c-text)}
+    .form-input:focus,.form-select:focus{outline:0;border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(230,126,34,.15)}
+    textarea.form-input{resize:vertical;min-height:80px}
+
+    /* ── Tags / Badges ─────────────────────────────── */
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:500}
+    .badge--success{background:rgba(16,185,129,.12);color:#059669}
+    .badge--warning{background:rgba(245,158,11,.12);color:#d97706}
+    .badge--danger{background:rgba(239,68,68,.12);color:#dc2626}
+    .badge--info{background:rgba(59,130,246,.12);color:#2563eb}
+    .badge--neutral{background:var(--c-bg);color:var(--c-muted)}
+
+    /* ── Modal ─────────────────────────────────────── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+    .modal-overlay.open{opacity:1;pointer-events:auto}
+    .modal{background:var(--c-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:90%;max-width:600px;max-height:85vh;display:flex;flex-direction:column}
+    .modal__head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--c-border)}
+    .modal__head h3{font-size:1.05rem;font-weight:600}
+    .modal__close{background:0;border:0;cursor:pointer;padding:4px;color:var(--c-muted);border-radius:var(--radius)}
+    .modal__close:hover{background:var(--c-bg)}
+    .modal__close i{width:20px;height:20px}
+    .modal__body{padding:20px;overflow-y:auto;flex:1}
+    .modal__foot{display:flex;justify-content:flex-end;gap:8px;padding:16px 20px;border-top:1px solid var(--c-border)}
+
+    /* ── Notifications panel ───────────────────────── */
+    .notif-panel{position:fixed;top:var(--topbar-h);right:0;width:380px;max-height:calc(100vh - var(--topbar-h));background:var(--c-surface);box-shadow:var(--shadow-lg);border-left:1px solid var(--c-border);z-index:150;transform:translateX(100%);transition:transform .3s;overflow-y:auto}
+    .notif-panel.open{transform:translateX(0)}
+    .notif-panel__head{padding:16px 20px;border-bottom:1px solid var(--c-border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--c-surface)}
+    .notif-panel__head h3{font-size:1rem;font-weight:600}
+    .notif-item{padding:14px 20px;border-bottom:1px solid var(--c-border);display:flex;gap:12px;align-items:flex-start}
+    .notif-item:hover{background:var(--c-bg)}
+    .notif-item__icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .notif-item__icon i{width:18px;height:18px}
+    .notif-item__icon--orange{background:rgba(230,126,34,.12);color:var(--c-primary)}
+    .notif-item__icon--green{background:rgba(16,185,129,.12);color:var(--c-success)}
+    .notif-item__icon--red{background:rgba(239,68,68,.12);color:var(--c-danger)}
+    .notif-item__icon--blue{background:rgba(59,130,246,.12);color:var(--c-info)}
+    .notif-item__text{font-size:.85rem;line-height:1.4}
+    .notif-item__time{font-size:.75rem;color:var(--c-muted);margin-top:2px}
+
+    /* ── Cert image upload ─────────────────────────── */
+    .cert-images{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .cert-images img{width:80px;height:80px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--c-border);cursor:pointer;transition:transform .15s}
+    .cert-images img:hover{transform:scale(1.05)}
+    .upload-zone{border:2px dashed var(--c-border);border-radius:var(--radius-lg);padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;color:var(--c-muted);font-size:.85rem}
+    .upload-zone:hover{border-color:var(--c-primary);color:var(--c-primary)}
+    .upload-zone i{width:32px;height:32px;margin-bottom:8px}
+
+    /* ── Multi-select filter ───────────────────────── */
+    .multi-select{position:relative}
+    .multi-select__trigger{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid var(--c-border);border-radius:var(--radius);cursor:pointer;background:var(--c-surface);font-size:.85rem;min-width:200px}
+    .multi-select__trigger:hover{border-color:var(--c-primary)}
+    .multi-select__dropdown{position:absolute;top:100%;left:0;right:0;background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:10;margin-top:4px;max-height:220px;overflow-y:auto;display:none}
+    .multi-select__dropdown.open{display:block}
+    .multi-select__option{padding:8px 12px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s}
+    .multi-select__option:hover{background:var(--c-bg)}
+    .multi-select__option.selected{background:rgba(230,126,34,.08);color:var(--c-primary)}
+    .multi-select__option input{accent-color:var(--c-primary)}
+    .multi-select__tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+    .multi-select__tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(230,126,34,.1);color:var(--c-primary);border-radius:12px;font-size:.75rem;font-weight:500}
+    .multi-select__tag button{background:0;border:0;cursor:pointer;color:var(--c-primary);padding:0;font-size:1rem;line-height:1}
+
+    /* ── Activity / Timeline ───────────────────────── */
+    .activity-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--c-border)}
+    .activity-item:last-child{border:0}
+    .activity-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
+    .activity-dot--green{background:var(--c-success)}
+    .activity-dot--orange{background:var(--c-primary)}
+    .activity-dot--red{background:var(--c-danger)}
+    .activity-dot--blue{background:var(--c-info)}
+    .activity-text{font-size:.85rem}
+    .activity-time{font-size:.75rem;color:var(--c-muted);margin-top:2px}
+
+    /* ── Page sections (hidden by default) ─────────── */
+    .page{display:none}
+    .page.active{display:block}
+
+    /* ── Image lightbox ────────────────────────────── */
+    .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+    .lightbox.open{opacity:1;pointer-events:auto}
+    .lightbox img{max-width:90%;max-height:90%;border-radius:var(--radius-lg);object-fit:contain}
+    .lightbox__close{position:absolute;top:20px;right:20px;background:0;border:0;color:#fff;cursor:pointer}
+    .lightbox__close i{width:28px;height:28px}
+
+    /* ── Grid helpers ──────────────────────────────── */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:768px){.grid-2{grid-template-columns:1fr}.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.content{padding:16px}.notif-panel{width:100%}}
+  </style>
 </head>
 <body>
-  <div class="app-layout">
-    <!-- Sidebar -->
+  <div class="app">
+    <!-- ── Sidebar ─────────────────────────────────── -->
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar__header">
-        <i data-lucide="hard-hat" class="sidebar__logo-icon"></i>
-        <span class="sidebar__logo-text">SafeSite</span>
+      <div class="sidebar__head">
+        <i data-lucide="hard-hat" class="sidebar__logo"></i>
+        <span class="sidebar__name">SafeSite</span>
       </div>
-      <nav class="sidebar__nav" id="sidebarNav">
-        <button class="sidebar__link sidebar__link--active" data-page="dashboard">
-          <i data-lucide="layout-dashboard"></i>
-          <span>Dashboard</span>
-        </button>
-        <button class="sidebar__link" data-page="staff">
-          <i data-lucide="users"></i>
-          <span>Staff</span>
-        </button>
-        <button class="sidebar__link" data-page="sites">
-          <i data-lucide="building-2"></i>
-          <span>Sites</span>
-        </button>
-        <button class="sidebar__link" data-page="certificates">
-          <i data-lucide="award"></i>
-          <span>Certificates</span>
-        </button>
-        <button class="sidebar__link" data-page="reports">
-          <i data-lucide="file-bar-chart"></i>
-          <span>Reports</span>
-        </button>
+      <nav class="sidebar__nav">
+        <button class="sidebar__link active" data-page="dashboard"><i data-lucide="layout-dashboard"></i>Dashboard</button>
+        <button class="sidebar__link" data-page="staff"><i data-lucide="users"></i>Staff</button>
+        <button class="sidebar__link" data-page="sites"><i data-lucide="building-2"></i>Sites</button>
+        <button class="sidebar__link" data-page="certificates"><i data-lucide="award"></i>Certificates</button>
+        <button class="sidebar__link" data-page="reports"><i data-lucide="bar-chart-3"></i>Reports</button>
       </nav>
-      <div class="sidebar__footer">
+      <div class="sidebar__foot">
         <div class="sidebar__user">
           <div class="sidebar__avatar">JD</div>
-          <div class="sidebar__user-info">
-            <span class="sidebar__user-name">John Doe</span>
-            <span class="sidebar__user-role">Safety Manager</span>
-          </div>
+          <div><div class="sidebar__uname">John Davies</div><div class="sidebar__urole">H&amp;S Manager</div></div>
         </div>
       </div>
     </aside>
 
-    <!-- Main content area -->
-    <main class="main-content">
-      <!-- Top bar -->
+    <!-- ── Main ────────────────────────────────────── -->
+    <div class="main">
       <header class="topbar">
-        <button class="topbar__menu-btn" id="menuToggle" aria-label="Toggle navigation menu">
-          <i data-lucide="menu"></i>
-        </button>
-        <h1 class="topbar__title" id="pageTitle">Dashboard</h1>
+        <button class="topbar__btn" id="menuToggle" style="display:none"><i data-lucide="menu"></i></button>
+        <div class="topbar__title" id="pageTitle">Dashboard</div>
         <div class="topbar__actions">
-          <button class="topbar__icon-btn" id="notifBtn" aria-label="Notifications">
+          <button class="topbar__btn" id="notifBtn" title="Notifications">
             <i data-lucide="bell"></i>
-            <span class="topbar__badge" id="notifBadge">0</span>
+            <span class="topbar__badge" id="notifCount">5</span>
           </button>
         </div>
       </header>
 
-      <!-- Page content -->
-      <div class="page-content" id="pageContent">
-        <!-- Dynamically rendered -->
-      </div>
-    </main>
-
-    <!-- Notifications pane (slides in from right) -->
-    <aside class="notifications-pane" id="notificationsPane">
-      <div class="notifications-pane__header">
-        <h2>Notifications</h2>
-        <button class="notifications-pane__close" id="notifClose" aria-label="Close notifications">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-      <div class="notifications-pane__body" id="notificationsList">
-        <!-- Dynamically rendered -->
-      </div>
-    </aside>
-
-    <!-- Modal overlay -->
-    <div class="modal-overlay" id="modalOverlay">
-      <div class="modal" id="modal">
-        <div class="modal__header">
-          <h2 class="modal__title" id="modalTitle"></h2>
-          <button class="modal__close" id="modalClose" aria-label="Close modal">
-            <i data-lucide="x"></i>
-          </button>
+      <div class="content">
+        <!-- ═══ DASHBOARD ═══ -->
+        <div class="page active" id="page-dashboard">
+          <div class="stats" id="dashStats"></div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel__head"><h3>Recent Activity</h3></div>
+              <div class="panel__body" id="recentActivity" style="padding:16px 20px"></div>
+            </div>
+            <div class="panel">
+              <div class="panel__head"><h3>Expiring Soon</h3></div>
+              <div class="panel__body" id="expiringSoon" style="padding:16px 20px"></div>
+            </div>
+          </div>
         </div>
-        <div class="modal__body" id="modalBody">
-          <!-- Dynamically rendered -->
+
+        <!-- ═══ STAFF ═══ -->
+        <div class="page" id="page-staff">
+          <div class="stats" id="staffStats"></div>
+          <div class="panel">
+            <div class="panel__head">
+              <h3>Staff Members</h3>
+              <button class="btn btn--primary" onclick="openStaffModal()"><i data-lucide="plus"></i>Add Staff</button>
+            </div>
+            <div class="panel__body">
+              <table><thead><tr><th>Name</th><th>Role</th><th>Site</th><th>Certificates</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="staffTable"></tbody></table>
+            </div>
+          </div>
         </div>
-        <div class="modal__footer" id="modalFooter">
-          <!-- Dynamically rendered -->
+
+        <!-- ═══ SITES ═══ -->
+        <div class="page" id="page-sites">
+          <div class="stats" id="siteStats"></div>
+          <div class="panel">
+            <div class="panel__head">
+              <h3>Construction Sites</h3>
+              <button class="btn btn--primary" onclick="openSiteModal()"><i data-lucide="plus"></i>Add Site</button>
+            </div>
+            <div class="panel__body">
+              <table><thead><tr><th>Site Name</th><th>Location</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="siteTable"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ CERTIFICATES ═══ -->
+        <div class="page" id="page-certificates">
+          <div class="stats" id="certStats"></div>
+          <div class="panel">
+            <div class="panel__head">
+              <h3>Training Certificates</h3>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                <div class="multi-select" id="certTypeFilter">
+                  <div class="multi-select__trigger" id="certFilterTrigger"><span>Filter by type...</span><i data-lucide="chevron-down" style="width:16px;height:16px"></i></div>
+                  <div class="multi-select__dropdown" id="certFilterDropdown"></div>
+                  <div class="multi-select__tags" id="certFilterTags"></div>
+                </div>
+                <button class="btn btn--primary" onclick="openCertModal()"><i data-lucide="plus"></i>Add Certificate</button>
+              </div>
+            </div>
+            <div class="panel__body">
+              <table><thead><tr><th>Staff Member</th><th>Certificate Type</th><th>Issue Date</th><th>Expiry Date</th><th>Status</th><th>Images</th><th>Actions</th></tr></thead>
+              <tbody id="certTable"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ REPORTS ═══ -->
+        <div class="page" id="page-reports">
+          <div class="panel">
+            <div class="panel__head"><h3>Generate Reports</h3></div>
+            <div class="panel__body" style="padding:20px">
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Report Type</label>
+                  <select class="form-select" id="reportType">
+                    <option value="staff-summary">Staff Summary</option>
+                    <option value="certificate-status">Certificate Status</option>
+                    <option value="site-overview">Site Overview</option>
+                    <option value="expiry-alert">Expiry Alert Report</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Site</label>
+                  <select class="form-select" id="reportSite"><option value="all">All Sites</option></select>
+                </div>
+              </div>
+              <div style="margin-top:8px"><button class="btn btn--primary" onclick="generateReport()"><i data-lucide="file-text"></i>Generate Report</button></div>
+              <div id="reportOutput" style="margin-top:20px"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="js/app.js"></script>
+  <!-- ── Notification Panel ────────────────────────── -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-panel__head">
+      <h3>Notifications</h3>
+      <button class="btn btn--ghost btn--sm" onclick="clearNotifications()">Clear all</button>
+    </div>
+    <div id="notifList"></div>
+  </div>
+
+  <!-- ── Modal ─────────────────────────────────────── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal__head">
+        <h3 id="modalTitle">Modal</h3>
+        <button class="modal__close" onclick="closeModal()" aria-label="Close modal"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal__body" id="modalBody"></div>
+      <div class="modal__foot" id="modalFoot"></div>
+    </div>
+  </div>
+
+  <!-- ── Lightbox ──────────────────────────────────── -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox__close" aria-label="Close lightbox"><i data-lucide="x"></i></button>
+    <img id="lightboxImg" src="" alt="Certificate image">
+  </div>
+
+  <script>
+  /* ═══════════════════════════════════════════════════════
+     SafeSite — Construction H&S Platform
+     ═══════════════════════════════════════════════════════ */
+
+  // ── Data Store ──────────────────────────────────────
+  const CERT_TYPES = ['CSCS Card','First Aid','IPAF','PASMA','Asbestos Awareness','Working at Heights','Fire Safety','Manual Handling','Fire Marshal','Scaffolding'];
+
+  const STORAGE_KEY = 'safesite_data';
+
+  function getDefaultData() {
+    return {
+      staff: [
+        {id:1,name:'Tom Wilson',role:'Site Supervisor',site:'Riverside Tower',phone:'07700 900101',email:'tom.w@buildco.com',certs:[1,2,7]},
+        {id:2,name:'Sarah Chen',role:'Health & Safety Officer',site:'Riverside Tower',phone:'07700 900102',email:'sarah.c@buildco.com',certs:[1,3,4,6]},
+        {id:3,name:'Mike O\'Brien',role:'Operative',site:'Harbour View Offices',phone:'07700 900103',email:'mike.o@buildco.com',certs:[1,5,8]},
+        {id:4,name:'Lisa Patel',role:'Project Manager',site:'City Bridge Renovation',phone:'07700 900104',email:'lisa.p@buildco.com',certs:[1,3,9]},
+        {id:5,name:'James Roberts',role:'Operative',site:'Harbour View Offices',phone:'07700 900105',email:'james.r@buildco.com',certs:[1,2,8]},
+        {id:6,name:'Emma Thompson',role:'Scaffolder',site:'Riverside Tower',phone:'07700 900106',email:'emma.t@buildco.com',certs:[1,6,10]},
+      ],
+      sites: [
+        {id:1,name:'Riverside Tower',address:'45 River Road, London SE1 2AB',status:'Active',manager:'Sarah Chen',startDate:'2024-01-15',notes:'12-storey residential block. Main contractor.'},
+        {id:2,name:'Harbour View Offices',address:'12 Harbour Way, London E14 5TY',status:'Active',manager:'Mike O\'Brien',startDate:'2024-03-01',notes:'Commercial office fit-out, 6 floors.'},
+        {id:3,name:'City Bridge Renovation',address:'8 Bridge Street, London EC4V 6AH',status:'Active',manager:'Lisa Patel',startDate:'2024-06-10',notes:'Listed building refurbishment. Heritage constraints.'},
+      ],
+      certificates: [
+        {id:1,staffId:1,type:'CSCS Card',issueDate:'2024-02-01',expiryDate:'2027-02-01',images:[]},
+        {id:2,staffId:1,type:'First Aid',issueDate:'2024-04-15',expiryDate:'2025-04-15',images:[]},
+        {id:3,staffId:2,type:'IPAF',issueDate:'2024-05-20',expiryDate:'2026-05-20',images:[]},
+        {id:4,staffId:2,type:'PASMA',issueDate:'2024-06-01',expiryDate:'2026-06-01',images:[]},
+        {id:5,staffId:3,type:'Asbestos Awareness',issueDate:'2024-01-10',expiryDate:'2025-01-10',images:[]},
+        {id:6,staffId:2,type:'Working at Heights',issueDate:'2024-07-22',expiryDate:'2025-07-22',images:[]},
+        {id:7,staffId:1,type:'Fire Safety',issueDate:'2023-12-01',expiryDate:'2024-12-01',images:[]},
+        {id:8,staffId:3,type:'Manual Handling',issueDate:'2024-08-05',expiryDate:'2027-08-05',images:[]},
+        {id:9,staffId:4,type:'Fire Marshal',issueDate:'2024-03-18',expiryDate:'2026-03-18',images:[]},
+        {id:10,staffId:6,type:'Scaffolding',issueDate:'2024-09-01',expiryDate:'2025-09-01',images:[]},
+        {id:11,staffId:4,type:'CSCS Card',issueDate:'2023-11-15',expiryDate:'2026-11-15',images:[]},
+        {id:12,staffId:5,type:'First Aid',issueDate:'2024-02-28',expiryDate:'2025-02-28',images:[]},
+      ],
+      notifications: [
+        {id:1,type:'warning',text:'Fire Safety cert for Tom Wilson expires on 01 Dec 2024',time:'2 hours ago',read:false},
+        {id:2,type:'danger',text:'Asbestos Awareness cert for Mike O\'Brien has EXPIRED',time:'1 day ago',read:false},
+        {id:3,type:'info',text:'New staff member James Roberts added to Harbour View Offices',time:'3 days ago',read:false},
+        {id:4,type:'success',text:'IPAF certificate uploaded for Sarah Chen',time:'1 week ago',read:true},
+        {id:5,type:'warning',text:'First Aid cert for Tom Wilson expires on 15 Apr 2025',time:'2 weeks ago',read:false},
+      ],
+      nextStaffId: 7,
+      nextCertId: 13,
+      nextNotifId: 6,
+    };
+  }
+
+  function loadData() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Merge with defaults to ensure all fields exist
+        const defaults = getDefaultData();
+        return { ...defaults, ...parsed };
+      }
+    } catch(e) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    return getDefaultData();
+  }
+  function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+  let data = loadData();
+
+  // ── Utility ─────────────────────────────────────────
+  function $(sel) { return document.querySelector(sel); }
+  function $$(sel) { return document.querySelectorAll(sel); }
+  function esc(s) { const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+  function formatDate(d) { if(!d) return '—'; const dt=new Date(d); return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+
+  function certStatus(expiry) {
+    if (!expiry) return {label:'Unknown',cls:'neutral'};
+    const now = new Date(); now.setHours(0,0,0,0);
+    const exp = new Date(expiry); exp.setHours(0,0,0,0);
+    const diff = (exp - now) / (1000*60*60*24);
+    if (diff < 0) return {label:'Expired',cls:'danger'};
+    if (diff < 90) return {label:'Expiring Soon',cls:'warning'};
+    return {label:'Valid',cls:'success'};
+  }
+
+  // ── Navigation ──────────────────────────────────────
+  let currentPage = 'dashboard';
+  function navigateTo(page) {
+    currentPage = page;
+    $$('.page').forEach(p => p.classList.remove('active'));
+    $(`#page-${page}`)?.classList.add('active');
+    $$('.sidebar__link').forEach(l => {
+      l.classList.toggle('active', l.dataset.page === page);
+    });
+    const titles = {dashboard:'Dashboard',staff:'Staff Management',sites:'Site Management',certificates:'Training Certificates',reports:'Reports'};
+    $('#pageTitle').textContent = titles[page] || page;
+    renderPage(page);
+  }
+
+  // ── Render functions ────────────────────────────────
+  function renderPage(page) {
+    switch(page) {
+      case 'dashboard': renderDashboard(); break;
+      case 'staff': renderStaff(); break;
+      case 'sites': renderSites(); break;
+      case 'certificates': renderCertificates(); break;
+      case 'reports': renderReports(); break;
+    }
+  }
+
+  // Dashboard
+  function renderDashboard() {
+    const totalStaff = data.staff.length;
+    const totalSites = data.sites.filter(s=>s.status==='Active').length;
+    const totalCerts = data.certificates.length;
+    const expiredCerts = data.certificates.filter(c=>certStatus(c.expiryDate).cls==='danger').length;
+    const expiringSoon = data.certificates.filter(c=>certStatus(c.expiryDate).cls==='warning').length;
+
+    $('#dashStats').innerHTML = `
+      <div class="stat"><div class="stat__icon stat__icon--orange"><i data-lucide="users"></i></div><div><div class="stat__num">${totalStaff}</div><div class="stat__label">Total Staff</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--blue"><i data-lucide="building-2"></i></div><div><div class="stat__num">${totalSites}</div><div class="stat__label">Active Sites</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--green"><i data-lucide="award"></i></div><div><div class="stat__num">${totalCerts}</div><div class="stat__label">Certificates</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--red"><i data-lucide="alert-triangle"></i></div><div><div class="stat__num">${expiredCerts}</div><div class="stat__label">Expired</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--yellow"><i data-lucide="clock"></i></div><div><div class="stat__num">${expiringSoon}</div><div class="stat__label">Expiring Soon</div></div></div>
+    `;
+
+    // Recent activity (from notifications)
+    const recent = data.notifications.slice(0, 5);
+    $('#recentActivity').innerHTML = recent.map(n => `
+      <div class="activity-item">
+        <div class="activity-dot activity-dot--${n.type==='danger'?'red':n.type==='warning'?'orange':n.type==='success'?'green':'blue'}"></div>
+        <div><div class="activity-text">${esc(n.text)}</div><div class="activity-time">${esc(n.time)}</div></div>
+      </div>
+    `).join('') || '<p style="color:var(--c-muted);font-size:.85rem">No recent activity</p>';
+
+    // Expiring soon
+    const expiring = data.certificates
+      .map(c => ({...c, status: certStatus(c.expiryDate), staffName: (data.staff.find(s=>s.id===c.staffId)||{}).name||'Unknown'}))
+      .filter(c => c.status.cls === 'warning' || c.status.cls === 'danger')
+      .sort((a,b) => new Date(a.expiryDate) - new Date(b.expiryDate))
+      .slice(0, 5);
+
+    $('#expiringSoon').innerHTML = expiring.map(c => `
+      <div class="activity-item">
+        <div class="activity-dot activity-dot--${c.status.cls==='danger'?'red':'orange'}"></div>
+        <div>
+          <div class="activity-text"><strong>${esc(c.staffName)}</strong> — ${esc(c.type)}</div>
+          <div class="activity-time">${c.status.cls==='danger'?'Expired':'Expires'} ${formatDate(c.expiryDate)}</div>
+        </div>
+      </div>
+    `).join('') || '<p style="color:var(--c-muted);font-size:.85rem">All certificates are valid</p>';
+
+    lucide.createIcons();
+  }
+
+  // Staff
+  function renderStaff() {
+    const siteCount = {};
+    data.staff.forEach(s => { siteCount[s.site] = (siteCount[s.site]||0)+1; });
+
+    $('#staffStats').innerHTML = `
+      <div class="stat"><div class="stat__icon stat__icon--orange"><i data-lucide="users"></i></div><div><div class="stat__num">${data.staff.length}</div><div class="stat__label">Total Staff</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--blue"><i data-lucide="building-2"></i></div><div><div class="stat__num">${data.sites.length}</div><div class="stat__label">Sites</div></div></div>
+    `;
+
+    $('#staffTable').innerHTML = data.staff.map(s => {
+      const certs = data.certificates.filter(c => c.staffId === s.id);
+      const hasExpired = certs.some(c => certStatus(c.expiryDate).cls === 'danger');
+      return `<tr>
+        <td><strong>${esc(s.name)}</strong></td>
+        <td>${esc(s.role)}</td>
+        <td>${esc(s.site)}</td>
+        <td>${certs.length} cert(s)</td>
+        <td><span class="badge badge--${hasExpired?'danger':'success'}">${hasExpired?'Issues Found':'OK'}</span></td>
+        <td><div class="btn-group">
+          <button class="btn btn--ghost btn--sm" onclick="viewStaff(${s.id})" title="View"><i data-lucide="eye"></i></button>
+          <button class="btn btn--ghost btn--sm" onclick="editStaff(${s.id})" title="Edit"><i data-lucide="pencil"></i></button>
+          <button class="btn btn--ghost btn--sm" onclick="deleteStaff(${s.id})" title="Delete" style="color:var(--c-danger)"><i data-lucide="trash-2"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  // Sites
+  function renderSites() {
+    $('#siteStats').innerHTML = `
+      <div class="stat"><div class="stat__icon stat__icon--blue"><i data-lucide="building-2"></i></div><div><div class="stat__num">${data.sites.length}</div><div class="stat__label">Total Sites</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--green"><i data-lucide="check-circle"></i></div><div><div class="stat__num">${data.sites.filter(s=>s.status==='Active').length}</div><div class="stat__label">Active</div></div></div>
+    `;
+
+    $('#siteTable').innerHTML = data.sites.map(s => {
+      const staffOnSite = data.staff.filter(st => st.site === s.name).length;
+      return `<tr>
+        <td><strong>${esc(s.name)}</strong></td>
+        <td>${esc(s.address)}</td>
+        <td>${staffOnSite}</td>
+        <td><span class="badge badge--${s.status==='Active'?'success':'neutral'}">${esc(s.status)}</span></td>
+        <td><div class="btn-group">
+          <button class="btn btn--ghost btn--sm" onclick="editSite(${s.id})" title="Edit"><i data-lucide="pencil"></i></button>
+          <button class="btn btn--ghost btn--sm" onclick="deleteSite(${s.id})" title="Delete" style="color:var(--c-danger)"><i data-lucide="trash-2"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  // Certificates
+  let activeFilters = [];
+
+  function renderCertificates() {
+    const total = data.certificates.length;
+    const valid = data.certificates.filter(c=>certStatus(c.expiryDate).cls==='success').length;
+    const expiring = data.certificates.filter(c=>certStatus(c.expiryDate).cls==='warning').length;
+    const expired = data.certificates.filter(c=>certStatus(c.expiryDate).cls==='danger').length;
+
+    $('#certStats').innerHTML = `
+      <div class="stat"><div class="stat__icon stat__icon--green"><i data-lucide="award"></i></div><div><div class="stat__num">${valid}</div><div class="stat__label">Valid</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--yellow"><i data-lucide="clock"></i></div><div><div class="stat__num">${expiring}</div><div class="stat__label">Expiring Soon</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--red"><i data-lucide="alert-circle"></i></div><div><div class="stat__num">${expired}</div><div class="stat__label">Expired</div></div></div>
+      <div class="stat"><div class="stat__icon stat__icon--blue"><i data-lucide="file-check"></i></div><div><div class="stat__num">${total}</div><div class="stat__label">Total Certificates</div></div></div>
+    `;
+
+    renderCertFilter();
+    renderCertTable();
+  }
+
+  function renderCertFilter() {
+    const dd = $('#certFilterDropdown');
+    dd.innerHTML = CERT_TYPES.map(t => `
+      <div class="multi-select__option ${activeFilters.includes(t)?'selected':''}" data-type="${t}">
+        <input type="checkbox" ${activeFilters.includes(t)?'checked':''} tabindex="-1">
+        ${esc(t)}
+      </div>
+    `).join('');
+
+    dd.querySelectorAll('.multi-select__option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const t = opt.dataset.type;
+        if (activeFilters.includes(t)) activeFilters = activeFilters.filter(f=>f!==t);
+        else activeFilters.push(t);
+        renderCertFilter();
+        renderCertTable();
+      });
+    });
+
+    // Trigger
+    const trigger = $('#certFilterTrigger');
+    trigger.querySelector('span').textContent = activeFilters.length ? `${activeFilters.length} type(s) selected` : 'Filter by type...';
+    trigger.onclick = (e) => { e.stopPropagation(); dd.classList.toggle('open'); };
+
+    // Tags
+    $('#certFilterTags').innerHTML = activeFilters.map(t => `
+      <span class="multi-select__tag">${esc(t)}<button onclick="removeFilter('${esc(t)}')">&times;</button></span>
+    `).join('');
+  }
+
+  function removeFilter(type) {
+    activeFilters = activeFilters.filter(f => f !== type);
+    renderCertFilter();
+    renderCertTable();
+  }
+
+  function renderCertTable() {
+    let certs = data.certificates;
+    if (activeFilters.length > 0) {
+      certs = certs.filter(c => activeFilters.includes(c.type));
+    }
+
+    $('#certTable').innerHTML = certs.map(c => {
+      const st = (data.staff.find(s=>s.id===c.staffId)||{}).name || 'Unknown';
+      const status = certStatus(c.expiryDate);
+      const imgCount = (c.images||[]).length;
+      return `<tr>
+        <td><strong>${esc(st)}</strong></td>
+        <td>${esc(c.type)}</td>
+        <td>${formatDate(c.issueDate)}</td>
+        <td>${formatDate(c.expiryDate)}</td>
+        <td><span class="badge badge--${status.cls}">${status.label}</span></td>
+        <td>${imgCount > 0 ? `<button class="btn btn--ghost btn--sm" onclick="viewCertImages(${c.id})"><i data-lucide="image"></i> ${imgCount}</button>` : '<span style="color:var(--c-muted);font-size:.8rem">None</span>'}</td>
+        <td><div class="btn-group">
+          <button class="btn btn--ghost btn--sm" onclick="editCert(${c.id})" title="Edit"><i data-lucide="pencil"></i></button>
+          <button class="btn btn--ghost btn--sm" onclick="deleteCert(${c.id})" title="Delete" style="color:var(--c-danger)"><i data-lucide="trash-2"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('');
+
+    if (certs.length === 0) {
+      $('#certTable').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--c-muted)">No certificates match the selected filters</td></tr>';
+    }
+    lucide.createIcons();
+  }
+
+  // Reports
+  function renderReports() {
+    const sel = $('#reportSite');
+    sel.innerHTML = '<option value="all">All Sites</option>' + data.sites.map(s => `<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+  }
+
+  function generateReport() {
+    const type = $('#reportType').value;
+    const site = $('#reportSite').value;
+    let staff = site === 'all' ? data.staff : data.staff.filter(s => s.site === site);
+    let html = '';
+
+    if (type === 'staff-summary') {
+      html = `<h4 style="margin-bottom:12px">Staff Summary${site!=='all'?' — '+esc(site):''}</h4>
+        <table><thead><tr><th>Name</th><th>Role</th><th>Site</th><th>Certs</th></tr></thead><tbody>
+        ${staff.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.role)}</td><td>${esc(s.site)}</td><td>${data.certificates.filter(c=>c.staffId===s.id).length}</td></tr>`).join('')}
+        </tbody></table>`;
+    } else if (type === 'certificate-status') {
+      let certs = data.certificates.filter(c => staff.some(s=>s.id===c.staffId));
+      html = `<h4 style="margin-bottom:12px">Certificate Status${site!=='all'?' — '+esc(site):''}</h4>
+        <table><thead><tr><th>Staff</th><th>Type</th><th>Expiry</th><th>Status</th></tr></thead><tbody>
+        ${certs.map(c=>{const st=certStatus(c.expiryDate);const nm=(data.staff.find(s=>s.id===c.staffId)||{}).name||'?';return `<tr><td>${esc(nm)}</td><td>${esc(c.type)}</td><td>${formatDate(c.expiryDate)}</td><td><span class="badge badge--${st.cls}">${st.label}</span></td></tr>`;}).join('')}
+        </tbody></table>`;
+    } else if (type === 'site-overview') {
+      const sites = site === 'all' ? data.sites : data.sites.filter(s=>s.name===site);
+      html = `<h4 style="margin-bottom:12px">Site Overview</h4>
+        <table><thead><tr><th>Site</th><th>Address</th><th>Staff</th><th>Active Certs</th><th>Status</th></tr></thead><tbody>
+        ${sites.map(s=>{const stf=data.staff.filter(st=>st.site===s.name);const certs=stf.reduce((a,st)=>a+data.certificates.filter(c=>c.staffId===st.id).length,0);return `<tr><td>${esc(s.name)}</td><td>${esc(s.address)}</td><td>${stf.length}</td><td>${certs}</td><td><span class="badge badge--${s.status==='Active'?'success':'neutral'}">${esc(s.status)}</span></td></tr>`;}).join('')}
+        </tbody></table>`;
+    } else if (type === 'expiry-alert') {
+      let certs = data.certificates.filter(c => staff.some(s=>s.id===c.staffId));
+      certs = certs.filter(c => { const st=certStatus(c.expiryDate); return st.cls==='danger'||st.cls==='warning'; });
+      certs.sort((a,b)=>new Date(a.expiryDate)-new Date(b.expiryDate));
+      html = `<h4 style="margin-bottom:12px">Expiry Alert Report${site!=='all'?' — '+esc(site):''}</h4>
+        <table><thead><tr><th>Staff</th><th>Type</th><th>Expiry</th><th>Status</th></tr></thead><tbody>
+        ${certs.length?certs.map(c=>{const st=certStatus(c.expiryDate);const nm=(data.staff.find(s=>s.id===c.staffId)||{}).name||'?';return `<tr><td>${esc(nm)}</td><td>${esc(c.type)}</td><td>${formatDate(c.expiryDate)}</td><td><span class="badge badge--${st.cls}">${st.label}</span></td></tr>`;}).join(''):'<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--c-muted)">No expiring or expired certificates</td></tr>'}
+        </tbody></table>`;
+    }
+    $('#reportOutput').innerHTML = html;
+    lucide.createIcons();
+  }
+
+  // ── Notifications ───────────────────────────────────
+  function renderNotifications() {
+    const unread = data.notifications.filter(n=>!n.read).length;
+    $('#notifCount').textContent = unread || '';
+    $('#notifCount').style.display = unread ? 'flex' : 'none';
+
+    const iconMap = {warning:'alert-triangle',danger:'alert-circle',success:'check-circle',info:'info'};
+    $('#notifList').innerHTML = data.notifications.map(n => `
+      <div class="notif-item" style="${n.read?'opacity:.6':''}" onclick="markRead(${n.id})">
+        <div class="notif-item__icon notif-item__icon--${n.type==='danger'?'red':n.type==='warning'?'orange':n.type==='success'?'green':'blue'}"><i data-lucide="${iconMap[n.type]||'bell'}"></i></div>
+        <div><div class="notif-item__text">${esc(n.text)}</div><div class="notif-item__time">${esc(n.time)}</div></div>
+      </div>
+    `).join('') || '<p style="padding:20px;text-align:center;color:var(--c-muted)">No notifications</p>';
+    lucide.createIcons();
+  }
+
+  function markRead(id) {
+    const n = data.notifications.find(x=>x.id===id);
+    if (n) n.read = true;
+    saveData(data);
+    renderNotifications();
+  }
+
+  function clearNotifications() {
+    data.notifications = [];
+    saveData(data);
+    renderNotifications();
+  }
+
+  // ── Modals ──────────────────────────────────────────
+  function openModal(title, bodyHtml, footHtml) {
+    $('#modalTitle').textContent = title;
+    $('#modalBody').innerHTML = bodyHtml;
+    $('#modalFoot').innerHTML = footHtml;
+    $('#modalOverlay').classList.add('open');
+    lucide.createIcons();
+  }
+  function closeModal() { $('#modalOverlay').classList.remove('open'); }
+
+  // Staff modals
+  function openStaffModal(staff) {
+    const isEdit = !!staff;
+    const siteOpts = data.sites.map(s => `<option value="${esc(s.name)}" ${staff&&staff.site===s.name?'selected':''}>${esc(s.name)}</option>`).join('');
+    openModal(isEdit?'Edit Staff':'Add Staff',
+      `<div class="form-group"><label>Full Name</label><input class="form-input" id="fStaffName" value="${esc(staff?.name||'')}"></div>
+       <div class="grid-2">
+         <div class="form-group"><label>Role</label><input class="form-input" id="fStaffRole" value="${esc(staff?.role||'')}"></div>
+         <div class="form-group"><label>Site</label><select class="form-select" id="fStaffSite"><option value="">Select...</option>${siteOpts}</select></div>
+       </div>
+       <div class="grid-2">
+         <div class="form-group"><label>Phone</label><input class="form-input" id="fStaffPhone" value="${esc(staff?.phone||'')}"></div>
+         <div class="form-group"><label>Email</label><input class="form-input" id="fStaffEmail" value="${esc(staff?.email||'')}"></div>
+       </div>`,
+      `<button class="btn btn--secondary" onclick="closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="saveStaff(${staff?.id||'null'})">${isEdit?'Update':'Add'} Staff</button>`
+    );
+  }
+
+  function saveStaff(id) {
+    const name = $('#fStaffName').value.trim();
+    const role = $('#fStaffRole').value.trim();
+    const site = $('#fStaffSite').value;
+    const phone = $('#fStaffPhone').value.trim();
+    const email = $('#fStaffEmail').value.trim();
+    if (!name || !site) { alert('Name and Site are required'); return; }
+
+    if (id) {
+      const s = data.staff.find(x=>x.id===id);
+      if (s) { Object.assign(s, {name,role,site,phone,email}); }
+    } else {
+      data.staff.push({id: data.nextStaffId++, name, role, site, phone, email, certs:[]});
+    }
+    saveData(data);
+    closeModal();
+    renderPage(currentPage);
+  }
+
+  function editStaff(id) { openStaffModal(data.staff.find(s=>s.id===id)); }
+  function viewStaff(id) {
+    const s = data.staff.find(x=>x.id===id);
+    if (!s) return;
+    const certs = data.certificates.filter(c=>c.staffId===id);
+    openModal(s.name,
+      `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:.875rem">
+        <div><strong>Role:</strong> ${esc(s.role)}</div>
+        <div><strong>Site:</strong> ${esc(s.site)}</div>
+        <div><strong>Phone:</strong> ${esc(s.phone||'—')}</div>
+        <div><strong>Email:</strong> ${esc(s.email||'—')}</div>
+      </div>
+      <h4 style="margin:16px 0 8px">Certificates (${certs.length})</h4>
+      ${certs.length?certs.map(c=>{const st=certStatus(c.expiryDate);return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--c-border);font-size:.85rem"><span>${esc(c.type)}</span><span class="badge badge--${st.cls}">${st.label} — ${formatDate(c.expiryDate)}</span></div>`;}).join(''):'<p style="color:var(--c-muted);font-size:.85rem">No certificates on record</p>'}`,
+      '<button class="btn btn--secondary" onclick="closeModal()">Close</button>'
+    );
+  }
+
+  function deleteStaff(id) {
+    if (!confirm('Remove this staff member?')) return;
+    data.staff = data.staff.filter(s=>s.id!==id);
+    data.certificates = data.certificates.filter(c=>c.staffId!==id);
+    saveData(data);
+    renderPage(currentPage);
+  }
+
+  // Site modals
+  function openSiteModal(site) {
+    const isEdit = !!site;
+    openModal(isEdit?'Edit Site':'Add Site',
+      `<div class="form-group"><label>Site Name</label><input class="form-input" id="fSiteName" value="${esc(site?.name||'')}"></div>
+       <div class="form-group"><label>Address</label><input class="form-input" id="fSiteAddr" value="${esc(site?.address||'')}"></div>
+       <div class="grid-2">
+         <div class="form-group"><label>Status</label><select class="form-select" id="fSiteStatus"><option value="Active" ${site?.status==='Active'?'selected':''}>Active</option><option value="On Hold" ${site?.status==='On Hold'?'selected':''}>On Hold</option><option value="Completed" ${site?.status==='Completed'?'selected':''}>Completed</option></select></div>
+         <div class="form-group"><label>Manager</label><input class="form-input" id="fSiteManager" value="${esc(site?.manager||'')}"></div>
+       </div>
+       <div class="form-group"><label>Notes</label><textarea class="form-input" id="fSiteNotes">${esc(site?.notes||'')}</textarea></div>`,
+      `<button class="btn btn--secondary" onclick="closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="saveSite(${site?.id||'null'})">${isEdit?'Update':'Add'} Site</button>`
+    );
+  }
+
+  function saveSite(id) {
+    const name = $('#fSiteName').value.trim();
+    const address = $('#fSiteAddr').value.trim();
+    const status = $('#fSiteStatus').value;
+    const manager = $('#fSiteManager').value.trim();
+    const notes = $('#fSiteNotes').value.trim();
+    if (!name) { alert('Site name is required'); return; }
+
+    if (id) {
+      const s = data.sites.find(x=>x.id===id);
+      if (s) Object.assign(s, {name,address,status,manager,notes});
+    } else {
+      data.sites.push({id: Date.now(), name, address, status, manager, notes, startDate: new Date().toISOString().slice(0,10)});
+    }
+    saveData(data);
+    closeModal();
+    renderPage(currentPage);
+  }
+
+  function editSite(id) { openSiteModal(data.sites.find(s=>s.id===id)); }
+  function deleteSite(id) {
+    if (!confirm('Remove this site?')) return;
+    data.sites = data.sites.filter(s=>s.id!==id);
+    saveData(data);
+    renderPage(currentPage);
+  }
+
+  // Certificate modals
+  function openCertModal(cert) {
+    const isEdit = !!cert;
+    const staffOpts = data.staff.map(s => `<option value="${s.id}" ${cert&&cert.staffId===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
+    const typeOpts = CERT_TYPES.map(t => `<option value="${esc(t)}" ${cert&&cert.type===t?'selected':''}>${esc(t)}</option>`).join('');
+
+    openModal(isEdit?'Edit Certificate':'Add Certificate',
+      `<div class="grid-2">
+         <div class="form-group"><label>Staff Member</label><select class="form-select" id="fCertStaff"><option value="">Select...</option>${staffOpts}</select></div>
+         <div class="form-group"><label>Certificate Type</label><select class="form-select" id="fCertType"><option value="">Select...</option>${typeOpts}</select></div>
+       </div>
+       <div class="grid-2">
+         <div class="form-group"><label>Issue Date</label><input class="form-input" type="date" id="fCertIssue" value="${cert?.issueDate||''}"></div>
+         <div class="form-group"><label>Expiry Date</label><input class="form-input" type="date" id="fCertExpiry" value="${cert?.expiryDate||''}"></div>
+       </div>
+       <div class="form-group">
+         <label>Certificate Images</label>
+         <div class="upload-zone" id="uploadZone"><i data-lucide="upload"></i><div>Click to upload images (JPG, PNG)</div><div style="font-size:.75rem;margin-top:4px">Multiple images supported</div></div>
+         <input type="file" id="certFileInput" multiple accept="image/*" style="display:none">
+         <div class="cert-images" id="certImagePreview"></div>
+       </div>`,
+      `<button class="btn btn--secondary" onclick="closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="saveCert(${cert?.id||'null'})">${isEdit?'Update':'Add'} Certificate</button>`
+    );
+
+    // Setup image upload
+    let uploadedImages = cert?.images ? [...cert.images] : [];
+    const uploadZone = $('#uploadZone');
+    const fileInput = $('#certFileInput');
+    const preview = $('#certImagePreview');
+
+    function renderPreviews() {
+      preview.innerHTML = uploadedImages.map((img, i) => `
+        <div style="position:relative">
+          <img src="${img}" alt="Cert image ${i+1}" onclick="event.stopPropagation();openLightbox('${img}')">
+          <button onclick="event.stopPropagation();uploadedImages.splice(${i},1);renderPreviews()" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--c-danger);color:#fff;border:0;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    uploadZone.onclick = () => fileInput.click();
+    uploadZone.ondragover = (e) => { e.preventDefault(); uploadZone.style.borderColor='var(--c-primary)'; };
+    uploadZone.ondragleave = () => { uploadZone.style.borderColor=''; };
+    uploadZone.ondrop = (e) => { e.preventDefault(); uploadZone.style.borderColor=''; handleFiles(e.dataTransfer.files); };
+    fileInput.onchange = () => handleFiles(fileInput.files);
+
+    function handleFiles(files) {
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          uploadedImages.push(e.target.result);
+          renderPreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    renderPreviews();
+
+    // Store images ref globally for save
+    window._uploadedCertImages = uploadedImages;
+
+    // Override save to include images
+    const origSave = window.saveCert;
+    window.saveCert = function(id) {
+      window._certImagesToSave = uploadedImages;
+      origSave(id);
+      window.saveCert = origSave;
+    };
+  }
+
+  function saveCert(id) {
+    const staffId = parseInt($('#fCertStaff').value);
+    const type = $('#fCertType').value;
+    const issueDate = $('#fCertIssue').value;
+    const expiryDate = $('#fCertExpiry').value;
+    const images = window._certImagesToSave || [];
+
+    if (!staffId || !type) { alert('Staff and Certificate Type are required'); return; }
+
+    if (id) {
+      const c = data.certificates.find(x=>x.id===id);
+      if (c) Object.assign(c, {staffId,type,issueDate,expiryDate,images});
+    } else {
+      data.certificates.push({id: data.nextCertId++, staffId, type, issueDate, expiryDate, images});
+    }
+    saveData(data);
+    closeModal();
+    renderPage(currentPage);
+  }
+
+  function editCert(id) { openCertModal(data.certificates.find(c=>c.id===id)); }
+  function deleteCert(id) {
+    if (!confirm('Delete this certificate?')) return;
+    data.certificates = data.certificates.filter(c=>c.id!==id);
+    saveData(data);
+    renderPage(currentPage);
+  }
+
+  function viewCertImages(id) {
+    const cert = data.certificates.find(c=>c.id===id);
+    if (!cert || !cert.images?.length) return;
+    openModal('Certificate Images',
+      `<div class="cert-images" style="gap:12px">${cert.images.map((img,i)=>`<img src="${img}" alt="Cert image ${i+1}" style="width:150px;height:150px;cursor:pointer" onclick="openLightbox('${img}')">`).join('')}</div>`,
+      '<button class="btn btn--secondary" onclick="closeModal()">Close</button>'
+    );
+    lucide.createIcons();
+  }
+
+  // ── Lightbox ────────────────────────────────────────
+  function openLightbox(src) {
+    $('#lightboxImg').src = src;
+    $('#lightbox').classList.add('open');
+  }
+  function closeLightbox() { $('#lightbox').classList.remove('open'); }
+
+  // ── Event listeners ─────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    // Sidebar nav
+    $$('.sidebar__link').forEach(link => {
+      link.addEventListener('click', () => navigateTo(link.dataset.page));
+    });
+
+    // Notifications
+    $('#notifBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const panel = $('#notifPanel');
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) renderNotifications();
+    });
+
+    // Close notification panel on outside click
+    document.addEventListener('click', (e) => {
+      const panel = $('#notifPanel');
+      if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== $('#notifBtn')) {
+        panel.classList.remove('open');
+      }
+    });
+
+    // Close multi-select on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.multi-select')) {
+        $$('.multi-select__dropdown').forEach(d => d.classList.remove('open'));
+      }
+    });
+
+    // Modal close on overlay click
+    $('#modalOverlay').addEventListener('click', (e) => {
+      if (e.target === $('#modalOverlay')) closeModal();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeLightbox();
+        $('#notifPanel').classList.remove('open');
+      }
+    });
+
+    // Initialize
+    lucide.createIcons();
+    renderDashboard();
+    renderNotifications();
+  });
+  </script>
 </body>
 </html>
