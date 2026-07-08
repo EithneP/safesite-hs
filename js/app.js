@@ -1,1182 +1,1120 @@
-/* ========================================
-   SafeSite — Main Application Logic
-   ======================================== */
+/* ============================================
+   SafeSite — Construction H&S Platform
+   Main Application JavaScript
+   ============================================ */
 
-import {
-  sites, employees, certifications, certTypes, tradeList,
-  timekeeperRecords, activityLog, notificationLog,
-  getEmployee, getSite, getCertType, getEmpCerts, getSiteEmployees,
-  getCertStatus, getEarliestCertExpiry, getExpiringCerts, getExpiredCerts
-} from './data.js';
+(function () {
+  'use strict';
 
-// ========== State ==========
-let currentPage = 'dashboard';
-let tkSyncTime = null;
-let currentExpiryReportType = null; // track which expiry report is active
+  // ── Storage ──
+  const STORAGE_KEY = 'safesite-data';
 
-// ========== DOM Ready ==========
-document.addEventListener('DOMContentLoaded', () => {
-  lucide.createIcons();
-  initNavigation();
-  initTopbar();
-  setCurrentDate();
-  renderDashboard();
-  renderEmployees();
-  renderSites();
-  renderTraining();
-  renderNotifications();
-  renderReports();
-  renderTimekeeper();
-  initModals();
-  initGlobalSearch();
-  initLightbox();
-  initDateRange();
-  initExportPrint();
-});
-
-// ========== Navigation ==========
-function initNavigation() {
-  document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
-    btn.addEventListener('click', () => navigateTo(btn.dataset.page));
-  });
-  document.querySelectorAll('[data-page]').forEach(el => {
-    if (!el.classList.contains('nav-item')) {
-      el.addEventListener('click', (e) => {
-        e.preventDefault();
-        navigateTo(el.dataset.page);
-      });
-    }
-  });
-  document.getElementById('menuToggle').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('open');
-  });
-}
-
-function navigateTo(page) {
-  currentPage = page;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('page--active'));
-  document.getElementById(`page-${page}`)?.classList.add('page--active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
-  document.getElementById('sidebar').classList.remove('open');
-}
-
-// ========== Topbar ==========
-function initTopbar() {
-  document.getElementById('notifBtn').addEventListener('click', () => navigateTo('notifications'));
-  document.getElementById('quickAddBtn').addEventListener('click', () => showAddEmployeeModal());
-}
-
-function setCurrentDate() {
-  const now = new Date();
-  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-  });
-}
-
-// ========== Global Search ==========
-function initGlobalSearch() {
-  const searchInput = document.getElementById('globalSearch');
-  searchInput.addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase().trim();
-    if (q.length < 2) return;
-    const matchEmps = employees.filter(emp =>
-      emp.firstName.toLowerCase().includes(q) ||
-      emp.lastName.toLowerCase().includes(q) ||
-      emp.id.toLowerCase().includes(q) ||
-      emp.trades.some(t => t.toLowerCase().includes(q))
-    );
-    if (matchEmps.length > 0) {
-      navigateTo('employees');
-      renderEmployees(matchEmps);
-    } else {
-      const matchSites = sites.filter(s => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q));
-      if (matchSites.length > 0) navigateTo('sites');
-    }
-  });
-}
-
-// ========== Dashboard ==========
-function renderDashboard() {
-  document.getElementById('kpiTotalStaff').textContent = employees.filter(e => e.status === 'active').length;
-  document.getElementById('kpiActiveSites').textContent = sites.filter(s => s.status === 'active').length;
-
-  const expiringSoon = getExpiringCerts(30);
-  const expired = getExpiredCerts();
-  document.getElementById('kpiExpiringSoon').textContent = expiringSoon.length;
-  document.getElementById('kpiExpired').textContent = expired.length;
-
-  const expiryEl = document.getElementById('dashExpiryList');
-  const topExpiry = expiringSoon.slice(0, 6);
-  if (topExpiry.length === 0) {
-    expiryEl.innerHTML = '<p class="text-muted">No certifications expiring soon.</p>';
-  } else {
-    expiryEl.innerHTML = topExpiry.map(cert => {
-      const emp = getEmployee(cert.employeeId);
-      const certInfo = getCertType(cert.certId);
-      const status = getCertStatus(cert);
-      const isUrgent = status.daysLeft <= 7 || status.status === 'expired';
-      return `
-        <div class="expiry-item">
-          <div class="avatar avatar--sm">${emp ? emp.firstName[0] + emp.lastName[0] : '??'}</div>
-          <div class="expiry-item__info">
-            <div class="expiry-item__name">${emp ? emp.firstName + ' ' + emp.lastName : cert.employeeId}</div>
-            <div class="expiry-item__cert">${certInfo ? certInfo.name : cert.certId}</div>
-          </div>
-          <span class="expiry-item__days ${isUrgent ? 'expiry-item__days--urgent' : 'expiry-item__days--soon'}">
-            ${status.status === 'expired' ? 'EXPIRED' : status.daysLeft + ' days'}
-          </span>
-          <span class="badge badge--${status.status}">${status.label}</span>
-        </div>`;
-    }).join('');
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    return null;
   }
 
-  const siteEl = document.getElementById('dashSiteList');
-  siteEl.innerHTML = sites.map(site => {
-    const staffOnSite = getSiteEmployees(site.id).length;
-    return `
-      <div class="expiry-item">
-        <span class="status-dot status-dot--${site.status}"></span>
-        <div class="expiry-item__info">
-          <div class="expiry-item__name">${site.name}</div>
-          <div class="expiry-item__cert">${site.address}</div>
-        </div>
-        <span class="badge badge--info">${staffOnSite} staff</span>
-      </div>`;
-  }).join('');
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
 
-  const actEl = document.getElementById('dashActivityList');
-  actEl.innerHTML = activityLog.map(a => `
-    <div class="activity-item">
-      <div class="activity-item__icon ${a.iconBg}"><i data-lucide="${a.icon}"></i></div>
-      <span class="activity-item__text">${a.text}</span>
-      <span class="activity-item__time">${a.time}</span>
-    </div>`).join('');
-
-  lucide.createIcons();
-}
-
-// ========== Employees ==========
-function renderEmployees(list = null) {
-  populateSiteFilter('empFilterSite');
-  populateTradeFilter('empFilterTrade');
-
-  const tbody = document.getElementById('employeeTableBody');
-  const employeesToRender = list || getFilteredEmployees();
-
-  tbody.innerHTML = employeesToRender.map(emp => {
-    const site = getSite(emp.site);
-    const earliest = getEarliestCertExpiry(emp.id);
-    const totalCerts = getEmpCerts(emp.id).length;
-    const expiredCount = getEmpCerts(emp.id).filter(c => getCertStatus(c).status === 'expired').length;
-
-    let nextExpiryHtml = '';
-    if (earliest) {
-      nextExpiryHtml = `<span class="badge badge--${earliest.status}">${earliest.status === 'expired' ? 'EXPIRED' : earliest.daysLeft + ' days'}</span>`;
-    } else {
-      nextExpiryHtml = '<span class="text-muted">—</span>';
-    }
-
-    return `
-      <tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:0.6rem;">
-            <div class="avatar avatar--sm">${emp.firstName[0]}${emp.lastName[0]}</div>
-            <div>
-              <strong>${emp.firstName} ${emp.lastName}</strong><br>
-              <span class="text-muted" style="font-size:0.78rem;">${emp.email}</span>
-            </div>
-          </div>
-        </td>
-        <td><code style="font-size:0.82rem;">${emp.id}</code></td>
-        <td>
-          <div class="trade-tags">
-            ${emp.trades.map(t => `<span class="trade-tag">${t}</span>`).join('')}
-          </div>
-        </td>
-        <td>${site ? site.name : '—'}</td>
-        <td>${totalCerts} ${expiredCount > 0 ? `<span style="color:var(--color-red);">(${expiredCount} expired)</span>` : ''}</td>
-        <td>${nextExpiryHtml}</td>
-        <td><span class="badge badge--${emp.status}">${emp.status === 'active' ? 'Active' : 'Inactive'}</span></td>
-        <td>
-          <button class="btn btn--ghost btn--sm" onclick="window.showEmpDetail('${emp.id}')"><i data-lucide="eye"></i></button>
-          <button class="btn btn--ghost btn--sm" onclick="window.showEditEmployee('${emp.id}')"><i data-lucide="pencil"></i></button>
-        </td>
-      </tr>`;
-  }).join('');
-
-  lucide.createIcons();
-}
-
-function getFilteredEmployees() {
-  const siteFilter = document.getElementById('empFilterSite')?.value || '';
-  const tradeFilter = document.getElementById('empFilterTrade')?.value || '';
-  const statusFilter = document.getElementById('empFilterStatus')?.value || '';
-  const certFilter = document.getElementById('empFilterCert')?.value || '';
-
-  return employees.filter(emp => {
-    if (siteFilter && emp.site !== siteFilter) return false;
-    if (tradeFilter && !emp.trades.includes(tradeFilter)) return false;
-    if (statusFilter && emp.status !== statusFilter) return false;
-    if (certFilter) {
-      const empCerts = getEmpCerts(emp.id);
-      if (certFilter === 'expired' && !empCerts.some(c => getCertStatus(c).status === 'expired')) return false;
-      if (certFilter === 'expiring' && !empCerts.some(c => getCertStatus(c).status === 'expiring')) return false;
-      if (certFilter === 'valid' && empCerts.some(c => getCertStatus(c).status !== 'valid')) return false;
-    }
-    return true;
-  });
-}
-
-document.getElementById('empFilterSite')?.addEventListener('change', () => renderEmployees());
-document.getElementById('empFilterTrade')?.addEventListener('change', () => renderEmployees());
-document.getElementById('empFilterStatus')?.addEventListener('change', () => renderEmployees());
-document.getElementById('empFilterCert')?.addEventListener('change', () => renderEmployees());
-document.getElementById('clearEmpFilters')?.addEventListener('click', () => {
-  document.getElementById('empFilterSite').value = '';
-  document.getElementById('empFilterTrade').value = '';
-  document.getElementById('empFilterStatus').value = '';
-  document.getElementById('empFilterCert').value = '';
-  renderEmployees();
-});
-
-// ========== Sites ==========
-function renderSites() {
-  const grid = document.getElementById('sitesGrid');
-  grid.innerHTML = sites.map(site => {
-    const staff = getSiteEmployees(site.id);
-    const expiredCount = staff.reduce((acc, emp) => {
-      return acc + getEmpCerts(emp.id).filter(c => getCertStatus(c).status === 'expired').length;
-    }, 0);
-    const expiringCount = staff.reduce((acc, emp) => {
-      return acc + getEmpCerts(emp.id).filter(c => getCertStatus(c).status === 'expiring').length;
-    }, 0);
-
-    return `
-      <div class="site-card">
-        <div class="site-card__header">
-          <div>
-            <div class="site-card__name">${site.name}</div>
-            <div class="site-card__address">${site.address}</div>
-          </div>
-          <span class="badge badge--${site.status === 'active' ? 'active' : 'inactive'}">
-            <span class="status-dot status-dot--${site.status}"></span>
-            ${site.status === 'active' ? 'Active' : 'Paused'}
-          </span>
-        </div>
-        <div class="site-card__body">
-          <div class="site-card__stats">
-            <div class="site-stat">
-              <span class="site-stat__value">${staff.length}</span>
-              <span class="site-stat__label">Staff</span>
-            </div>
-            <div class="site-stat">
-              <span class="site-stat__value" style="color:${expiredCount > 0 ? 'var(--color-red)' : 'var(--color-green)'}">${expiredCount}</span>
-              <span class="site-stat__label">Expired Certs</span>
-            </div>
-            <div class="site-stat">
-              <span class="site-stat__value" style="color:${expiringCount > 0 ? 'var(--color-amber)' : 'var(--color-green)'}">${expiringCount}</span>
-              <span class="site-stat__label">Expiring</span>
-            </div>
-            <div class="site-stat">
-              <span class="site-stat__value">${site.manager}</span>
-              <span class="site-stat__label">Manager</span>
-            </div>
-          </div>
-          <div class="site-card__staff">
-            <div class="site-card__staff-title">Assigned Staff</div>
-            <div class="site-card__staff-list">
-              ${staff.length === 0 ? '<span class="text-muted">No staff assigned</span>' :
-                staff.slice(0, 8).map(e => `<span class="trade-tag">${e.firstName} ${e.lastName}</span>`).join('') +
-                (staff.length > 8 ? `<span class="trade-tag">+${staff.length - 8} more</span>` : '')
-              }
-            </div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// ========== Training & Certifications ==========
-function renderTraining() {
-  populateCertTypeFilter('certFilterType');
-  populateSiteFilter('certFilterSite');
-
-  const allCerts = [...certifications];
-  const valid = allCerts.filter(c => getCertStatus(c).status === 'valid').length;
-  const expiring = allCerts.filter(c => getCertStatus(c).status === 'expiring').length;
-  const expired = allCerts.filter(c => getCertStatus(c).status === 'expired').length;
-
-  document.getElementById('certValidCount').textContent = valid;
-  document.getElementById('certExpiringCount').textContent = expiring;
-  document.getElementById('certExpiredCount').textContent = expired;
-
-  renderCertTable();
-}
-
-function renderCertTable() {
-  const tbody = document.getElementById('certTableBody');
-  const filtered = getFilteredCerts();
-
-  tbody.innerHTML = filtered.map(cert => {
-    const emp = getEmployee(cert.employeeId);
-    const certInfo = getCertType(cert.certId);
-    const status = getCertStatus(cert);
-    const site = emp ? getSite(emp.site) : null;
-    const label = emp ? `${emp.firstName} ${emp.lastName} — ${certInfo ? certInfo.name : cert.certId}` : cert.certId;
-
-    const imageCell = cert.image
-      ? `<img class="cert-thumb" src="${cert.image}" alt="${label}" onclick="window.openLightbox('${cert.image}','${label.replace(/'/g, "\\'")}')">`
-      : `<button class="btn btn--ghost btn--sm" onclick="window.showUploadCertImage('${cert.employeeId}','${cert.certId}')" title="Upload certificate image"><i data-lucide="camera"></i></button>`;
-
-    return `
-      <tr>
-        <td>${emp ? emp.firstName + ' ' + emp.lastName : cert.employeeId}</td>
-        <td><strong>${certInfo ? certInfo.name : cert.certId}</strong></td>
-        <td>${imageCell}</td>
-        <td>${formatDate(cert.issued)}</td>
-        <td>${formatDate(cert.expires)}</td>
-        <td><span class="badge badge--${status.status}">
-          ${status.status === 'expired' ? 'EXPIRED' : status.status === 'expiring' ? status.daysLeft + ' days' : 'Valid'}
-        </span></td>
-        <td>${site ? site.name : '—'}</td>
-        <td>
-          <button class="btn btn--ghost btn--sm" onclick="window.showRenewCertModal('${cert.employeeId}','${cert.certId}')"><i data-lucide="refresh-cw"></i></button>
-        </td>
-      </tr>`;
-  }).join('');
-
-  lucide.createIcons();
-}
-
-function getFilteredCerts() {
-  const typeFilter = document.getElementById('certFilterType')?.value || '';
-  const statusFilter = document.getElementById('certFilterStatus')?.value || '';
-  const siteFilter = document.getElementById('certFilterSite')?.value || '';
-
-  return certifications.filter(cert => {
-    if (typeFilter && cert.certId !== typeFilter) return false;
-    const status = getCertStatus(cert);
-    if (statusFilter && status.status !== statusFilter) return false;
-    if (siteFilter) {
-      const emp = getEmployee(cert.employeeId);
-      if (!emp || emp.site !== siteFilter) return false;
-    }
-    return true;
-  }).sort((a, b) => new Date(a.expires) - new Date(b.expires));
-}
-
-document.getElementById('certFilterType')?.addEventListener('change', () => renderCertTable());
-document.getElementById('certFilterStatus')?.addEventListener('change', () => renderCertTable());
-document.getElementById('certFilterSite')?.addEventListener('change', () => renderCertTable());
-
-// ========== Certificate Image Upload ==========
-window.showUploadCertImage = function(empId, certId) {
-  const emp = getEmployee(empId);
-  const certInfo = getCertType(certId);
-  const cert = certifications.find(c => c.employeeId === empId && c.certId === certId);
-
-  const body = `
-    <p style="margin-bottom:1rem;">Upload a scanned copy or photo of the <strong>${certInfo ? certInfo.name : certId}</strong> certificate for <strong>${emp ? emp.firstName + ' ' + emp.lastName : empId}</strong>.</p>
-    <div class="cert-upload-zone" id="certUploadZone">
-      <i data-lucide="upload-cloud"></i>
-      <p>Drag &amp; drop an image here, or click to browse</p>
-      <p class="upload-hint">Supports JPG, PNG, PDF — max 10 MB</p>
-      <input type="file" id="certFileInput" accept="image/*,.pdf">
-    </div>
-    <div id="certImagePreview" style="margin-top:1rem;"></div>
-  `;
-  openModal('Upload Certificate Image', body, `
-    <button class="btn btn--outline" onclick="closeModal()">Cancel</button>
-    <button class="btn btn--primary" id="saveCertImageBtn" disabled><i data-lucide="save"></i> Save Image</button>
-  `);
-
-  // Set up drag/drop and file picker
-  const zone = document.getElementById('certUploadZone');
-  const input = document.getElementById('certFileInput');
-  const preview = document.getElementById('certImagePreview');
-  const saveBtn = document.getElementById('saveCertImageBtn');
-  let pendingImageData = null;
-
-  zone.addEventListener('click', () => input.click());
-  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    zone.classList.remove('dragover');
-    if (e.dataTransfer.files.length) handleCertFile(e.dataTransfer.files[0]);
-  });
-  input.addEventListener('change', (e) => {
-    if (e.target.files.length) handleCertFile(e.target.files[0]);
-  });
-
-  function handleCertFile(file) {
-    if (file.size > 10 * 1024 * 1024) {
-      showToast('error', 'File too large — maximum 10 MB');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      pendingImageData = e.target.result;
-      preview.innerHTML = `
-        <div style="display:flex;align-items:center;gap:1rem;">
-          <img src="${pendingImageData}" style="max-width:200px;max-height:150px;border-radius:var(--radius-sm);border:1px solid var(--color-border);">
-          <div>
-            <strong>${file.name}</strong><br>
-            <span class="text-muted">${(file.size / 1024).toFixed(0)} KB</span>
-          </div>
-        </div>`;
-      saveBtn.disabled = false;
+  // ── Sample Data ──
+  function getDefaultData() {
+    const today = new Date();
+    const d = (daysAgo) => {
+      const dt = new Date(today);
+      dt.setDate(dt.getDate() - daysAgo);
+      return dt.toISOString().split('T')[0];
     };
-    reader.readAsDataURL(file);
+    const future = (daysAhead) => {
+      const dt = new Date(today);
+      dt.setDate(dt.getDate() + daysAhead);
+      return dt.toISOString().split('T')[0];
+    };
+
+    return {
+      staff: [
+        { id: 's1', name: 'John Smith', role: 'Site Manager', phone: '07700 900001', email: 'john.smith@buildco.co.uk', siteId: 'site1', startDate: d(365), status: 'active' },
+        { id: 's2', name: 'Sarah Williams', role: 'Safety Officer', phone: '07700 900002', email: 'sarah.w@buildco.co.uk', siteId: 'site1', startDate: d(200), status: 'active' },
+        { id: 's3', name: 'Mike Johnson', role: 'Foreman', phone: '07700 900003', email: 'mike.j@buildco.co.uk', siteId: 'site2', startDate: d(150), status: 'active' },
+        { id: 's4', name: 'Emma Brown', role: 'Operative', phone: '07700 900004', email: 'emma.b@buildco.co.uk', siteId: 'site2', startDate: d(90), status: 'active' },
+        { id: 's5', name: 'David Wilson', role: 'Operative', phone: '07700 900005', email: 'david.w@buildco.co.uk', siteId: 'site3', startDate: d(60), status: 'active' },
+        { id: 's6', name: 'Lisa Taylor', role: 'Administrator', phone: '07700 900006', email: 'lisa.t@buildco.co.uk', siteId: 'site1', startDate: d(300), status: 'active' },
+        { id: 's7', name: 'James Anderson', role: 'Operative', phone: '07700 900007', email: 'james.a@buildco.co.uk', siteId: 'site3', startDate: d(30), status: 'inactive' },
+      ],
+      sites: [
+        { id: 'site1', name: 'Riverside Tower Block', address: '14 Riverside Drive, London SE1 2AB', status: 'active', startDate: d(400), manager: 'John Smith' },
+        { id: 'site2', name: 'Greenfield Business Park', address: 'Greenfield Lane, Manchester M1 3PQ', status: 'active', startDate: d(250), manager: 'Mike Johnson' },
+        { id: 'site3', name: 'Harbour View Residences', address: '22 Harbour Road, Bristol BS1 5TY', status: 'active', startDate: d(120), manager: 'John Smith' },
+        { id: 'site4', name: 'City Centre Refurb', address: '8 High Street, Birmingham B1 1BB', status: 'completed', startDate: d(500), manager: 'Lisa Taylor' },
+      ],
+      certificates: [
+        { id: 'c1', staffId: 's1', type: 'CSCS Card', issueDate: d(180), expiryDate: future(180), images: [], notes: 'Gold card — Supervisor' },
+        { id: 'c2', staffId: 's1', type: 'First Aid at Work', issueDate: d(100), expiryDate: future(265), images: [], notes: '3-day course completed' },
+        { id: 'c3', staffId: 's2', type: 'NEBOSH General', issueDate: d(300), expiryDate: future(65), images: [], notes: 'National Certificate' },
+        { id: 'c4', staffId: 's2', type: 'Fire Safety', issueDate: d(90), expiryDate: future(275), images: [], notes: 'Fire Warden training' },
+        { id: 'c5', staffId: 's3', type: 'CSCS Card', issueDate: d(150), expiryDate: future(215), images: [], notes: 'Gold card — Foreman' },
+        { id: 'c6', staffId: 's4', type: 'CSCS Card', issueDate: d(60), expiryDate: future(305), images: [], notes: 'Blue card — Skilled Worker' },
+        { id: 'c7', staffId: 's4', type: 'Asbestos Awareness', issueDate: d(45), expiryDate: future(320), images: [], notes: 'UKATA approved course' },
+        { id: 'c8', staffId: 's5', type: 'CSCS Card', issueDate: d(30), expiryDate: future(335), images: [], notes: 'Blue card' },
+        { id: 'c9', staffId: 's5', type: 'Manual Handling', issueDate: d(25), expiryDate: future(340), images: [], notes: 'Annual refresher completed' },
+        { id: 'c10', staffId: 's3', type: 'IPAF Operator', issueDate: d(200), expiryDate: future(-20), images: [], notes: 'MEWP Category 3a & 3b' },
+        { id: 'c11', staffId: 's6', type: 'Asbestos Awareness', issueDate: d(120), expiryDate: future(245), images: [], notes: 'Office admin — refresher' },
+      ],
+      notifications: [
+        { id: 'n1', type: 'warning', title: 'Certificate Expiring', desc: "Mike Johnson's IPAF Operator certificate expired 20 days ago", time: d(0), read: false },
+        { id: 'n2', type: 'danger', title: 'Certificate Overdue', desc: 'Sarah Williams — NEBOSH General expires in 65 days', time: d(0), read: false },
+        { id: 'n3', type: 'info', title: 'New Staff Member', desc: 'James Anderson added to Harbour View Residences', time: d(5), read: false },
+        { id: 'n4', type: 'success', title: 'Site Inspection Passed', desc: 'Riverside Tower Block — Q4 safety audit passed', time: d(10), read: true },
+      ],
+      currentPage: 'dashboard',
+    };
   }
 
-  saveBtn.addEventListener('click', () => {
-    if (pendingImageData && cert) {
-      cert.image = pendingImageData;
-      closeModal();
-      renderCertTable();
-      renderDashboard();
-      showToast('success', `Certificate image saved for ${certInfo ? certInfo.name : certId}`);
-    }
-  });
-};
+  // ── State ──
+  const state = loadData() || getDefaultData();
+  if (!loadData()) saveData();
 
-// ========== Lightbox ==========
-function initLightbox() {
-  const overlay = document.getElementById('lightboxOverlay');
-  const closeBtn = document.getElementById('lightboxClose');
+  // ── Utility ──
+  function genId() { return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); }
 
-  closeBtn.addEventListener('click', closeLightbox);
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeLightbox();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && overlay.classList.contains('active')) closeLightbox();
-  });
-}
-
-window.openLightbox = function(src, caption) {
-  const overlay = document.getElementById('lightboxOverlay');
-  document.getElementById('lightboxImg').src = src;
-  document.getElementById('lightboxCaption').textContent = caption || '';
-  overlay.classList.add('active');
-};
-
-function closeLightbox() {
-  document.getElementById('lightboxOverlay').classList.remove('active');
-}
-
-// ========== Notifications ==========
-function renderNotifications() {
-  const log = document.getElementById('notifLog');
-  log.innerHTML = notificationLog.map(n => `
-    <div class="notif-item ${n.sent ? 'notif-item--sent' : 'notif-item--unread'}">
-      <div class="notif-item__icon notif-item__icon--${n.type}">
-        <i data-lucide="${n.type === 'danger' ? 'shield-alert' : n.type === 'warning' ? 'alert-triangle' : n.type === 'success' ? 'check-circle' : 'info'}"></i>
-      </div>
-      <div class="notif-item__content">
-        <div class="notif-item__title">${n.title}</div>
-        <div class="notif-item__desc">${n.desc}</div>
-        <div class="notif-item__meta">${n.date}</div>
-      </div>
-      <div class="notif-item__actions">
-        ${!n.sent ? `<button class="btn btn--primary btn--sm" onclick="window.sendNotification('${n.id}')"><i data-lucide="send"></i> Send</button>` : '<span class="badge badge--active"><i data-lucide="check"></i> Sent</span>'}
-      </div>
-    </div>`).join('');
-
-  lucide.createIcons();
-}
-
-window.sendNotification = function(notifId) {
-  const n = notificationLog.find(x => x.id === notifId);
-  if (n) {
-    n.sent = true;
-    showToast('success', `Email sent: ${n.title}`);
-    renderNotifications();
-  }
-};
-
-document.getElementById('sendAllNotifsBtn')?.addEventListener('click', () => {
-  notificationLog.filter(n => !n.sent).forEach(n => { n.sent = true; });
-  showToast('success', 'All pending notifications sent via email');
-  renderNotifications();
-});
-
-document.getElementById('clearNotifsBtn')?.addEventListener('click', () => {
-  showToast('info', 'All notifications marked as read');
-});
-
-document.getElementById('sendExpiryEmailsBtn')?.addEventListener('click', () => {
-  const expiring = getExpiringCerts(30);
-  if (expiring.length === 0) {
-    showToast('info', 'No expiring certificates to report');
-    return;
-  }
-  const emailTo = document.getElementById('notifEmailTo')?.value || 'office@buildco.co.uk';
-  showToast('success', `Expiry alert email sent to ${emailTo} — ${expiring.length} certificates flagged`);
-});
-
-// ========== Reports ==========
-let lastReportType = null;
-
-function renderReports() {
-  document.querySelectorAll('[data-report]').forEach(btn => {
-    btn.addEventListener('click', () => generateReport(btn.dataset.report));
-  });
-}
-
-function generateReport(type, dateFrom, dateTo) {
-  lastReportType = type;
-  const output = document.getElementById('reportOutput');
-  const title = document.getElementById('reportTitle');
-  const content = document.getElementById('reportContent');
-  const dateRangePicker = document.getElementById('dateRangePicker');
-  output.style.display = 'block';
-
-  // Show date range picker only for expiry report
-  dateRangePicker.style.display = type === 'expiry' ? 'flex' : 'none';
-
-  switch (type) {
-    case 'employee':
-      title.textContent = 'Employee Compliance Report';
-      content.innerHTML = buildEmployeeReport();
-      break;
-    case 'site':
-      title.textContent = 'Site Compliance Report';
-      content.innerHTML = buildSiteReport();
-      break;
-    case 'expiry':
-      title.textContent = 'Expiry Forecast Report';
-      content.innerHTML = buildExpiryReport(dateFrom, dateTo);
-      break;
-    case 'trade':
-      title.textContent = 'Trade Coverage Report';
-      content.innerHTML = buildTradeReport();
-      break;
-  }
-  lucide.createIcons();
-}
-
-// ========== Date Range for Expiry Report ==========
-function initDateRange() {
-  // Set sensible defaults
-  const today = new Date();
-  const from = document.getElementById('expiryRangeFrom');
-  const to = document.getElementById('expiryRangeTo');
-  if (from) from.value = today.toISOString().split('T')[0];
-  if (to) {
-    const future = new Date();
-    future.setMonth(future.getMonth() + 3);
-    to.value = future.toISOString().split('T')[0];
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  document.getElementById('applyDateRange')?.addEventListener('click', () => {
-    const f = document.getElementById('expiryRangeFrom').value;
-    const t = document.getElementById('expiryRangeTo').value;
-    generateReport('expiry', f, t);
-    showToast('info', `Showing certifications expired/expiring between ${formatDate(f)} and ${formatDate(t)}`);
-  });
+  function getStaffById(id) {
+    return state.staff.find(s => s.id === id);
+  }
 
-  document.getElementById('resetDateRange')?.addEventListener('click', () => {
+  function getSiteById(id) {
+    return state.sites.find(s => s.id === id);
+  }
+
+  function getStaffName(id) {
+    const s = getStaffById(id);
+    return s ? s.name : 'Unknown';
+  }
+
+  function getSiteName(id) {
+    const s = getSiteById(id);
+    return s ? s.name : 'Unassigned';
+  }
+
+  function daysUntil(dateStr) {
+    const target = new Date(dateStr);
     const now = new Date();
-    document.getElementById('expiryRangeFrom').value = now.toISOString().split('T')[0];
-    const future = new Date();
-    future.setMonth(future.getMonth() + 3);
-    document.getElementById('expiryRangeTo').value = future.toISOString().split('T')[0];
-    generateReport('expiry');
-  });
-}
-
-// ========== Report Builders ==========
-function buildEmployeeReport() {
-  let html = '<table class="report-table"><thead><tr><th>Employee</th><th>ID</th><th>Trades</th><th>Site</th><th>Total Certs</th><th>Valid</th><th>Expiring</th><th>Expired</th></tr></thead><tbody>';
-  employees.forEach(emp => {
-    const certs = getEmpCerts(emp.id);
-    const valid = certs.filter(c => getCertStatus(c).status === 'valid').length;
-    const expiring = certs.filter(c => getCertStatus(c).status === 'expiring').length;
-    const expired = certs.filter(c => getCertStatus(c).status === 'expired').length;
-    const site = getSite(emp.site);
-    html += `<tr>
-      <td>${emp.firstName} ${emp.lastName}</td>
-      <td><code>${emp.id}</code></td>
-      <td>${emp.trades.join(', ')}</td>
-      <td>${site ? site.name : '—'}</td>
-      <td>${certs.length}</td>
-      <td><span style="color:var(--color-green);font-weight:600;">${valid}</span></td>
-      <td><span style="color:var(--color-amber);font-weight:600;">${expiring}</span></td>
-      <td><span style="color:var(--color-red);font-weight:600;">${expired}</span></td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  return html;
-}
-
-function buildSiteReport() {
-  let html = '<table class="report-table"><thead><tr><th>Site</th><th>Status</th><th>Staff</th><th>Total Certs</th><th>Valid</th><th>Expiring</th><th>Expired</th><th>Compliance %</th></tr></thead><tbody>';
-  sites.forEach(site => {
-    const staff = getSiteEmployees(site.id);
-    let totalCerts = 0, valid = 0, expiring = 0, expired = 0;
-    staff.forEach(emp => {
-      const certs = getEmpCerts(emp.id);
-      totalCerts += certs.length;
-      valid += certs.filter(c => getCertStatus(c).status === 'valid').length;
-      expiring += certs.filter(c => getCertStatus(c).status === 'expiring').length;
-      expired += certs.filter(c => getCertStatus(c).status === 'expired').length;
-    });
-    const compliance = totalCerts > 0 ? Math.round((valid / totalCerts) * 100) : 100;
-    html += `<tr>
-      <td><strong>${site.name}</strong></td>
-      <td><span class="badge badge--${site.status === 'active' ? 'active' : 'inactive'}">${site.status}</span></td>
-      <td>${staff.length}</td>
-      <td>${totalCerts}</td>
-      <td style="color:var(--color-green);font-weight:600;">${valid}</td>
-      <td style="color:var(--color-amber);font-weight:600;">${expiring}</td>
-      <td style="color:var(--color-red);font-weight:600;">${expired}</td>
-      <td><strong style="color:${compliance < 80 ? 'var(--color-red)' : compliance < 95 ? 'var(--color-amber)' : 'var(--color-green)'}">${compliance}%</strong></td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  return html;
-}
-
-function buildExpiryReport(dateFrom, dateTo) {
-  // If date range provided, filter by that range instead of preset buckets
-  if (dateFrom && dateTo) {
-    return buildCustomExpiryReport(dateFrom, dateTo);
+    return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
   }
 
-  // Default: preset period buckets
-  const periods = [
-    { label: 'Already Expired', certs: getExpiredCerts() },
-    { label: 'Expiring in 7 days', certs: getExpiringCerts(7).filter(c => getCertStatus(c).status !== 'expired') },
-    { label: 'Expiring in 30 days', certs: getExpiringCerts(30).filter(c => getCertStatus(c).daysLeft > 7) },
-    { label: 'Expiring in 90 days', certs: getExpiringCerts(90).filter(c => getCertStatus(c).daysLeft > 30) },
+  function getExpiryBadgeClass(days) {
+    if (days < 0) return 'badge--danger';
+    if (days <= 30) return 'badge--warning';
+    return 'badge--success';
+  }
+
+  function getExpiryLabel(days) {
+    if (days < 0) return `Expired ${Math.abs(days)}d ago`;
+    if (days === 0) return 'Expires today';
+    return `Expires in ${days}d`;
+  }
+
+  const CERT_TYPES = [
+    'CSCS Card', 'First Aid at Work', 'NEBOSH General', 'Fire Safety',
+    'Asbestos Awareness', 'Manual Handling', 'IPAF Operator',
+    'Working at Height', 'Abrasive Wheels', 'Scaffolding', 'Confined Spaces',
+    'DBS Check', 'Other'
   ];
 
-  let html = '<table class="report-table"><thead><tr><th>Period</th><th>Count</th><th>Employees</th></tr></thead><tbody>';
-  periods.forEach(p => {
-    const empNames = [...new Set(p.certs.map(c => {
-      const emp = getEmployee(c.employeeId);
-      return emp ? emp.firstName + ' ' + emp.lastName : c.employeeId;
-    }))];
-    html += `<tr>
-      <td><strong>${p.label}</strong></td>
-      <td><strong>${p.certs.length}</strong></td>
-      <td>${empNames.slice(0, 5).join(', ')}${empNames.length > 5 ? ` +${empNames.length - 5} more` : ''}</td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  html += '<p class="text-muted" style="margin-top:1rem;"><i data-lucide="info"></i> Use the date range above to filter for a specific timeframe.</p>';
-  return html;
-}
+  // ── DOM refs ──
+  const pageContent = document.getElementById('pageContent');
+  const pageTitle = document.getElementById('pageTitle');
+  const sidebarNav = document.getElementById('sidebarNav');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalBody = document.getElementById('modalBody');
+  const modalFooter = document.getElementById('modalFooter');
+  const notifPane = document.getElementById('notificationsPane');
+  const notifList = document.getElementById('notificationsList');
+  const notifBadge = document.getElementById('notifBadge');
 
-function buildCustomExpiryReport(dateFrom, dateTo) {
-  const from = new Date(dateFrom);
-  const to = new Date(dateTo);
-  to.setHours(23, 59, 59, 999);
+  // ── Certificate filter state ──
+  let certFilters = {
+    search: '',
+    types: [],      // multi-select: empty = show all
+    expiringOnly: false,
+  };
 
-  const matching = certifications.filter(c => {
-    const exp = new Date(c.expires);
-    return exp >= from && exp <= to;
-  }).sort((a, b) => new Date(a.expires) - new Date(b.expires));
-
-  if (matching.length === 0) {
-    return `<p class="text-muted">No certifications found with expiry dates between <strong>${formatDate(dateFrom)}</strong> and <strong>${formatDate(dateTo)}</strong>.</p>`;
+  // ── Navigation ──
+  function navigateTo(page) {
+    state.currentPage = page;
+    saveData();
+    renderNav();
+    renderPage();
   }
 
-  const expired = matching.filter(c => getCertStatus(c).status === 'expired');
-  const expiring = matching.filter(c => getCertStatus(c).status === 'expiring');
-  const valid = matching.filter(c => getCertStatus(c).status === 'valid');
-
-  let html = `<div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
-    <div class="cert-summary__card cert-summary__card--expired" style="flex:1;min-width:120px;"><span class="cert-summary__count">${expired.length}</span><span class="cert-summary__label">Already Expired</span></div>
-    <div class="cert-summary__card cert-summary__card--expiring" style="flex:1;min-width:120px;"><span class="cert-summary__count">${expiring.length}</span><span class="cert-summary__label">Expiring Soon</span></div>
-    <div class="cert-summary__card cert-summary__card--valid" style="flex:1;min-width:120px;"><span class="cert-summary__count">${valid.length}</span><span class="cert-summary__label">Valid (in range)</span></div>
-  </div>`;
-
-  html += `<p class="text-muted" style="margin-bottom:0.75rem;">Showing <strong>${matching.length}</strong> certifications expiring between <strong>${formatDate(dateFrom)}</strong> and <strong>${formatDate(dateTo)}</strong>.</p>`;
-
-  html += '<table class="report-table"><thead><tr><th>Employee</th><th>Certification</th><th>Site</th><th>Issued</th><th>Expires</th><th>Status</th><th>Image</th></tr></thead><tbody>';
-  matching.forEach(cert => {
-    const emp = getEmployee(cert.employeeId);
-    const certInfo = getCertType(cert.certId);
-    const site = emp ? getSite(emp.site) : null;
-    const status = getCertStatus(cert);
-    const label = emp ? `${emp.firstName} ${emp.lastName} — ${certInfo ? certInfo.name : cert.certId}` : cert.certId;
-    const imgCell = cert.image
-      ? `<img class="cert-thumb" src="${cert.image}" alt="${label}" onclick="window.openLightbox('${cert.image}','${label.replace(/'/g, "\\'")}')" style="cursor:pointer;">`
-      : '<span class="text-muted">—</span>';
-
-    html += `<tr>
-      <td>${emp ? emp.firstName + ' ' + emp.lastName : cert.employeeId}</td>
-      <td><strong>${certInfo ? certInfo.name : cert.certId}</strong></td>
-      <td>${site ? site.name : '—'}</td>
-      <td>${formatDate(cert.issued)}</td>
-      <td>${formatDate(cert.expires)}</td>
-      <td><span class="badge badge--${status.status}">${status.status === 'expired' ? 'EXPIRED' : status.status === 'expiring' ? status.daysLeft + ' days' : 'Valid'}</span></td>
-      <td>${imgCell}</td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  return html;
-}
-
-function buildTradeReport() {
-  const tradeCounts = {};
-  employees.filter(e => e.status === 'active').forEach(emp => {
-    emp.trades.forEach(trade => {
-      if (!tradeCounts[trade]) tradeCounts[trade] = { total: 0, sites: new Set() };
-      tradeCounts[trade].total++;
-      tradeCounts[trade].sites.add(emp.site);
+  function renderNav() {
+    sidebarNav.querySelectorAll('.sidebar__link').forEach(btn => {
+      btn.classList.toggle('sidebar__link--active', btn.dataset.page === state.currentPage);
     });
-  });
-
-  let html = '<table class="report-table"><thead><tr><th>Trade</th><th>Staff Count</th><th>Sites Covered</th><th>Sites</th></tr></thead><tbody>';
-  Object.entries(tradeCounts).sort((a, b) => b[1].total - a[1].total).forEach(([trade, data]) => {
-    const siteNames = [...data.sites].map(s => getSite(s)?.name || s).join(', ');
-    html += `<tr>
-      <td><strong>${trade}</strong></td>
-      <td>${data.total}</td>
-      <td>${data.sites.size}</td>
-      <td style="font-size:0.82rem;">${siteNames}</td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  return html;
-}
-
-// ========== Export & Print ==========
-function initExportPrint() {
-  document.getElementById('exportCsvBtn')?.addEventListener('click', exportCurrentReportCsv);
-  document.getElementById('printReportBtn')?.addEventListener('click', () => {
-    window.print();
-    showToast('info', 'Print dialog opened');
-  });
-}
-
-function exportCurrentReportCsv() {
-  const table = document.querySelector('#reportContent .report-table');
-  if (!table) {
-    showToast('warning', 'Generate a report first');
-    return;
-  }
-  let csv = '';
-  table.querySelectorAll('tr').forEach(row => {
-    const cells = [];
-    row.querySelectorAll('th, td').forEach(cell => {
-      let text = cell.textContent.trim().replace(/"/g, '""');
-      cells.push(`"${text}"`);
-    });
-    csv += cells.join(',') + '\n';
-  });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `safesite-report-${lastReportType || 'data'}-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('success', 'CSV exported');
-}
-
-// ========== Timekeeper ==========
-function renderTimekeeper() {
-  const tbody = document.getElementById('tkTableBody');
-  tbody.innerHTML = timekeeperRecords.map(r => {
-    const inMin = timeToMin(r.clockIn);
-    const outMin = timeToMin(r.clockOut);
-    const hours = ((outMin - inMin) / 60).toFixed(1);
-    const emp = getEmployee(r.employeeId);
-    const site = getSite(r.site);
-    return `
-      <tr>
-        <td><code>${r.employeeId}</code></td>
-        <td>${r.name}</td>
-        <td>${site ? site.name : r.site}</td>
-        <td>${r.clockIn}</td>
-        <td>${r.clockOut}</td>
-        <td>${hours}h</td>
-        <td>${formatDate(r.date)}</td>
-      </tr>`;
-  }).join('');
-
-  const todayRecords = timekeeperRecords.filter(r => r.date === new Date().toISOString().split('T')[0]);
-  document.getElementById('tkLastSync').textContent = tkSyncTime || 'Never';
-  document.getElementById('tkRecordCount').textContent = timekeeperRecords.length;
-  document.getElementById('tkOnSiteNow').textContent = todayRecords.length;
-}
-
-document.getElementById('syncTimekeeperBtn')?.addEventListener('click', () => {
-  tkSyncTime = new Date().toLocaleString('en-GB');
-  renderTimekeeper();
-  showToast('success', 'Timekeeper data synced successfully');
-});
-
-document.getElementById('uploadTimekeeperBtn')?.addEventListener('click', () => {
-  showToast('info', 'Timekeeper CSV upload — connect your timekeeping system to feed data here');
-});
-
-// ========== Modals ==========
-function initModals() {
-  document.getElementById('modalClose').addEventListener('click', closeModal);
-  document.getElementById('modalOverlay').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('modalOverlay')) closeModal();
-  });
-}
-
-function openModal(title, bodyHtml, footerHtml = '') {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalBody').innerHTML = bodyHtml;
-  document.getElementById('modalFooter').innerHTML = footerHtml;
-  document.getElementById('modalOverlay').classList.add('active');
-  lucide.createIcons();
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('active');
-}
-
-// Employee Detail
-window.showEmpDetail = function(empId) {
-  const emp = getEmployee(empId);
-  if (!emp) return;
-  const certs = getEmpCerts(emp.id);
-  const site = getSite(emp.site);
-
-  let certHtml = certs.length === 0 ? '<p class="text-muted">No certifications recorded.</p>' :
-    `<table class="report-table"><thead><tr><th>Certification</th><th>Issued</th><th>Expires</th><th>Status</th><th>Certificate</th></tr></thead><tbody>` +
-    certs.map(c => {
-      const info = getCertType(c.certId);
-      const s = getCertStatus(c);
-      const label = `${emp.firstName} ${emp.lastName} — ${info ? info.name : c.certId}`;
-      const imgCell = c.image
-        ? `<img class="cert-thumb" src="${c.image}" alt="${label}" onclick="window.openLightbox('${c.image}','${label.replace(/'/g, "\\'")}')">`
-        : `<button class="btn btn--ghost btn--sm" onclick="closeModal();window.showUploadCertImage('${emp.id}','${c.certId}')"><i data-lucide="camera"></i> Upload</button>`;
-      return `<tr>
-        <td><strong>${info ? info.name : c.certId}</strong></td>
-        <td>${formatDate(c.issued)}</td>
-        <td>${formatDate(c.expires)}</td>
-        <td><span class="badge badge--${s.status}">${s.status === 'expired' ? 'EXPIRED' : s.status === 'expiring' ? s.daysLeft + ' days' : 'Valid'}</span></td>
-        <td>${imgCell}</td>
-      </tr>`;
-    }).join('') + '</tbody></table>';
-
-  const body = `
-    <div style="display:flex;gap:1.25rem;align-items:flex-start;margin-bottom:1.5rem;">
-      <div class="avatar avatar--lg">${emp.firstName[0]}${emp.lastName[0]}</div>
-      <div>
-        <h3 style="margin-bottom:0.25rem;">${emp.firstName} ${emp.lastName}</h3>
-        <p class="text-muted">${emp.email} • ${emp.phone}</p>
-        <p class="text-muted" style="margin-top:0.25rem;">ID: ${emp.id} • Started: ${formatDate(emp.startDate)}</p>
-        <div class="trade-tags" style="margin-top:0.5rem;">
-          ${emp.trades.map(t => `<span class="trade-tag">${t}</span>`).join('')}
-        </div>
-      </div>
-    </div>
-    <div style="margin-bottom:0.5rem;"><strong>Current Site:</strong> ${site ? site.name : 'Unassigned'}</div>
-    <div style="margin-bottom:1rem;"><strong>Status:</strong> <span class="badge badge--${emp.status}">${emp.status === 'active' ? 'Active' : 'Inactive'}</span></div>
-    <h4 style="margin-bottom:0.75rem;">Certifications</h4>
-    ${certHtml}
-  `;
-  openModal('Employee Details', body, '<button class="btn btn--outline" onclick="closeModal()">Close</button>');
-};
-
-// Edit Employee
-window.showEditEmployee = function(empId) {
-  const emp = getEmployee(empId);
-  if (!emp) return;
-  const siteOptions = sites.map(s => `<option value="${s.id}" ${s.id === emp.site ? 'selected' : ''}>${s.name}</option>`).join('');
-  const tradeCheckboxes = tradeList.map(t =>
-    `<label style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;font-size:0.88rem;">
-      <input type="checkbox" name="trades" value="${t}" ${emp.trades.includes(t) ? 'checked' : ''}> ${t}
-    </label>`
-  ).join('');
-
-  const body = `
-    <form id="editEmpForm">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="editFirstName">First Name</label>
-          <input type="text" id="editFirstName" class="form-input" value="${emp.firstName}">
-        </div>
-        <div class="form-group">
-          <label for="editLastName">Last Name</label>
-          <input type="text" id="editLastName" class="form-input" value="${emp.lastName}">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="editEmail">Email</label>
-          <input type="email" id="editEmail" class="form-input" value="${emp.email}">
-        </div>
-        <div class="form-group">
-          <label for="editPhone">Phone</label>
-          <input type="text" id="editPhone" class="form-input" value="${emp.phone}">
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="editSite">Site</label>
-        <select id="editSite" class="form-input">${siteOptions}</select>
-      </div>
-      <div class="form-group">
-        <label>Trades</label>
-        <div style="max-height:150px;overflow-y:auto;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:0.5rem;">
-          ${tradeCheckboxes}
-        </div>
-      </div>
-    </form>
-  `;
-  openModal('Edit Employee', body, `
-    <button class="btn btn--outline" onclick="closeModal()">Cancel</button>
-    <button class="btn btn--primary" onclick="window.saveEmployee('${emp.id}')"><i data-lucide="save"></i> Save</button>
-  `);
-};
-
-window.saveEmployee = function(empId) {
-  const emp = getEmployee(empId);
-  if (!emp) return;
-  emp.firstName = document.getElementById('editFirstName').value;
-  emp.lastName = document.getElementById('editLastName').value;
-  emp.email = document.getElementById('editEmail').value;
-  emp.phone = document.getElementById('editPhone').value;
-  emp.site = document.getElementById('editSite').value;
-  emp.trades = [...document.querySelectorAll('input[name="trades"]:checked')].map(cb => cb.value);
-
-  closeModal();
-  renderEmployees();
-  renderDashboard();
-  showToast('success', `Employee ${emp.firstName} ${emp.lastName} updated`);
-};
-
-// Add Employee
-document.getElementById('addEmployeeBtn')?.addEventListener('click', () => showAddEmployeeModal());
-
-function showAddEmployeeModal() {
-  const siteOptions = sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  const tradeCheckboxes = tradeList.map(t =>
-    `<label style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;font-size:0.88rem;">
-      <input type="checkbox" name="newTrades" value="${t}"> ${t}
-    </label>`
-  ).join('');
-
-  const body = `
-    <form id="addEmpForm">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="newFirstName">First Name</label>
-          <input type="text" id="newFirstName" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label for="newLastName">Last Name</label>
-          <input type="text" id="newLastName" class="form-input" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="newEmail">Email</label>
-          <input type="email" id="newEmail" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="newPhone">Phone</label>
-          <input type="text" id="newPhone" class="form-input">
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="newSite">Site</label>
-        <select id="newSite" class="form-input">${siteOptions}</select>
-      </div>
-      <div class="form-group">
-        <label>Trades</label>
-        <div style="max-height:150px;overflow-y:auto;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:0.5rem;">
-          ${tradeCheckboxes}
-        </div>
-      </div>
-    </form>
-  `;
-  openModal('Add New Employee', body, `
-    <button class="btn btn--outline" onclick="closeModal()">Cancel</button>
-    <button class="btn btn--primary" onclick="window.createNewEmployee()"><i data-lucide="user-plus"></i> Add Employee</button>
-  `);
-}
-
-window.createNewEmployee = function() {
-  const firstName = document.getElementById('newFirstName').value.trim();
-  const lastName = document.getElementById('newLastName').value.trim();
-  if (!firstName || !lastName) {
-    showToast('error', 'First and last name are required');
-    return;
-  }
-  const newId = 'EMP' + String(employees.length + 1).padStart(3, '0');
-  const trades = [...document.querySelectorAll('input[name="newTrades"]:checked')].map(cb => cb.value);
-  if (trades.length === 0) {
-    showToast('error', 'Select at least one trade');
-    return;
   }
 
-  employees.push({
-    id: newId,
-    firstName,
-    lastName,
-    phone: document.getElementById('newPhone').value,
-    email: document.getElementById('newEmail').value,
-    trades,
-    site: document.getElementById('newSite').value,
-    status: 'active',
-    startDate: new Date().toISOString().split('T')[0]
-  });
+  function renderPage() {
+    const titles = {
+      dashboard: 'Dashboard',
+      staff: 'Staff Management',
+      sites: 'Site Management',
+      certificates: 'Certificates & Training',
+      reports: 'Reports',
+    };
+    pageTitle.textContent = titles[state.currentPage] || 'Dashboard';
 
-  closeModal();
-  renderEmployees();
-  renderDashboard();
-  showToast('success', `${firstName} ${lastName} added as ${newId}`);
-};
+    switch (state.currentPage) {
+      case 'dashboard': renderDashboard(); break;
+      case 'staff': renderStaff(); break;
+      case 'sites': renderSites(); break;
+      case 'certificates': renderCertificates(); break;
+      case 'reports': renderReports(); break;
+      default: renderDashboard();
+    }
+    lucide.createIcons();
+  }
 
-// Renew Cert Modal
-window.showRenewCertModal = function(empId, certId) {
-  const emp = getEmployee(empId);
-  const certInfo = getCertType(certId);
-  if (!emp || !certInfo) return;
+  // ── DASHBOARD ──
+  function renderDashboard() {
+    const activeStaff = state.staff.filter(s => s.status === 'active').length;
+    const activeSites = state.sites.filter(s => s.status === 'active').length;
+    const totalCerts = state.certificates.length;
+    const expiringCerts = state.certificates.filter(c => {
+      const days = daysUntil(c.expiryDate);
+      return days >= 0 && days <= 30;
+    }).length;
+    const expiredCerts = state.certificates.filter(c => daysUntil(c.expiryDate) < 0).length;
 
-  const body = `
-    <p style="margin-bottom:1rem;">Renew <strong>${certInfo.name}</strong> for <strong>${emp.firstName} ${emp.lastName}</strong></p>
-    <div class="form-group">
-      <label for="renewIssueDate">Issue Date</label>
-      <input type="date" id="renewIssueDate" class="form-input" value="${new Date().toISOString().split('T')[0]}">
-    </div>
-    <div class="form-group">
-      <label for="renewExpiryDate">Expiry Date</label>
-      <input type="date" id="renewExpiryDate" class="form-input" value="${getFutureDate(certInfo.validityMonths)}">
-    </div>
-    <p class="text-muted" style="margin-bottom:1rem;">Default validity: ${certInfo.validityMonths} months from issue</p>
-    <div class="cert-upload-zone" id="renewUploadZone">
-      <i data-lucide="camera"></i>
-      <p>Upload renewed certificate image (optional)</p>
-      <p class="upload-hint">Drag &amp; drop or click to browse</p>
-      <input type="file" id="renewFileInput" accept="image/*,.pdf">
-    </div>
-    <div id="renewImagePreview" style="margin-top:0.75rem;"></div>
-  `;
-  openModal('Renew Certification', body, `
-    <button class="btn btn--outline" onclick="closeModal()">Cancel</button>
-    <button class="btn btn--primary" onclick="window.renewCert('${empId}','${certId}')"><i data-lucide="refresh-cw"></i> Renew</button>
-  `);
+    pageContent.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--orange"><i data-lucide="users"></i></div>
+          <div>
+            <div class="stat-card__value">${activeStaff}</div>
+            <div class="stat-card__label">Active Staff</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--blue"><i data-lucide="building-2"></i></div>
+          <div>
+            <div class="stat-card__value">${activeSites}</div>
+            <div class="stat-card__label">Active Sites</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--green"><i data-lucide="award"></i></div>
+          <div>
+            <div class="stat-card__value">${totalCerts}</div>
+            <div class="stat-card__label">Total Certificates</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--red"><i data-lucide="alert-triangle"></i></div>
+          <div>
+            <div class="stat-card__value">${expiredCerts + expiringCerts}</div>
+            <div class="stat-card__label">Expiring / Expired</div>
+          </div>
+        </div>
+      </div>
 
-  // Set up upload in renew modal
-  setTimeout(() => {
-    const zone = document.getElementById('renewUploadZone');
-    const input = document.getElementById('renewFileInput');
-    const preview = document.getElementById('renewImagePreview');
-    if (!zone || !input) return;
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div class="card">
+          <div class="card__header">
+            <h3 class="card__title">Upcoming Expirations</h3>
+          </div>
+          <div class="card__body">
+            ${renderExpiringList()}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card__header">
+            <h3 class="card__title">Recent Activity</h3>
+          </div>
+          <div class="card__body">
+            ${renderRecentActivity()}
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
-    let pendingImage = null;
-    window._renewPendingImage = null;
+  function renderExpiringList() {
+    const expiring = state.certificates
+      .map(c => ({ ...c, days: daysUntil(c.expiryDate) }))
+      .filter(c => c.days <= 30)
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 5);
 
-    zone.addEventListener('click', () => input.click());
-    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-    zone.addEventListener('drop', (e) => {
-      e.preventDefault(); zone.classList.remove('dragover');
-      if (e.dataTransfer.files.length) processRenewFile(e.dataTransfer.files[0]);
-    });
-    input.addEventListener('change', (e) => {
-      if (e.target.files.length) processRenewFile(e.target.files[0]);
-    });
+    if (expiring.length === 0) {
+      return '<p style="color:var(--color-text-muted);font-size:0.85rem;">No certificates expiring soon.</p>';
+    }
 
-    function processRenewFile(file) {
-      if (file.size > 10 * 1024 * 1024) { showToast('error', 'Max 10 MB'); return; }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        pendingImage = e.target.result;
-        window._renewPendingImage = pendingImage;
-        preview.innerHTML = `<div style="display:flex;align-items:center;gap:0.75rem;">
-          <img src="${pendingImage}" style="max-width:150px;max-height:100px;border-radius:var(--radius-sm);border:1px solid var(--color-border);">
-          <div><strong>${file.name}</strong><br><span class="text-muted">${(file.size / 1024).toFixed(0)} KB</span></div>
+    return `<ul class="recent-activity">` + expiring.map(c => `
+      <li class="recent-activity__item">
+        <div class="recent-activity__icon" style="background:${c.days < 0 ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)'};color:${c.days < 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
+          <i data-lucide="alert-circle"></i>
+        </div>
+        <div class="recent-activity__text">
+          <strong>${getStaffName(c.staffId)}</strong> — ${c.type}
+          <br><span class="badge ${getExpiryBadgeClass(c.days)}" style="margin-top:4px;">${getExpiryLabel(c.days)}</span>
+        </div>
+      </li>
+    `).join('') + `</ul>`;
+  }
+
+  function renderRecentActivity() {
+    const items = state.notifications.slice().sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+    if (items.length === 0) {
+      return '<p style="color:var(--color-text-muted);font-size:0.85rem;">No recent activity.</p>';
+    }
+
+    const iconMap = {
+      warning: { icon: 'alert-triangle', cls: 'notif-item__icon--warning' },
+      danger: { icon: 'alert-octagon', cls: 'notif-item__icon--danger' },
+      info: { icon: 'info', cls: 'notif-item__icon--info' },
+      success: { icon: 'check-circle', cls: 'notif-item__icon--success' },
+    };
+
+    return `<ul class="recent-activity">` + items.map(n => {
+      const ic = iconMap[n.type] || iconMap.info;
+      return `
+        <li class="recent-activity__item">
+          <div class="recent-activity__icon ${ic.cls}"><i data-lucide="${ic.icon}"></i></div>
+          <div class="recent-activity__text"><strong>${n.title}</strong><br>${n.desc}</div>
+          <div class="recent-activity__time">${formatDate(n.time)}</div>
+        </li>`;
+    }).join('') + `</ul>`;
+  }
+
+  // ── STAFF PAGE ──
+  function renderStaff() {
+    const rows = state.staff.map(s => {
+      const siteName = getSiteName(s.siteId);
+      const certCount = state.certificates.filter(c => c.staffId === s.id).length;
+      return `
+        <tr>
+          <td><strong>${s.name}</strong></td>
+          <td>${s.role}</td>
+          <td>${s.phone}</td>
+          <td>${siteName}</td>
+          <td>${certCount}</td>
+          <td><span class="badge ${s.status === 'active' ? 'badge--success' : 'badge--neutral'}">${s.status}</span></td>
+          <td>
+            <button class="btn btn--ghost btn--sm" onclick="window._app.editStaff('${s.id}')" title="Edit"><i data-lucide="pencil"></i></button>
+            <button class="btn btn--ghost btn--sm" onclick="window._app.deleteStaff('${s.id}')" title="Delete"><i data-lucide="trash-2"></i></button>
+          </td>
+        </tr>`;
+    }).join('');
+
+    pageContent.innerHTML = `
+      <div class="card">
+        <div class="card__header">
+          <h3 class="card__title">All Staff (${state.staff.length})</h3>
+          <button class="btn btn--primary" onclick="window._app.addStaff()"><i data-lucide="plus"></i> Add Staff</button>
+        </div>
+        <div class="card__body">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th><th>Role</th><th>Phone</th><th>Site</th><th>Certs</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── SITES PAGE ──
+  function renderSites() {
+    const rows = state.sites.map(s => {
+      const staffCount = state.staff.filter(st => st.siteId === s.id).length;
+      return `
+        <tr>
+          <td><strong>${s.name}</strong></td>
+          <td>${s.address}</td>
+          <td>${s.manager}</td>
+          <td>${staffCount}</td>
+          <td><span class="badge ${s.status === 'active' ? 'badge--success' : 'badge--neutral'}">${s.status}</span></td>
+          <td>${formatDate(s.startDate)}</td>
+          <td>
+            <button class="btn btn--ghost btn--sm" onclick="window._app.editSite('${s.id}')" title="Edit"><i data-lucide="pencil"></i></button>
+            <button class="btn btn--ghost btn--sm" onclick="window._app.deleteSite('${s.id}')" title="Delete"><i data-lucide="trash-2"></i></button>
+          </td>
+        </tr>`;
+    }).join('');
+
+    pageContent.innerHTML = `
+      <div class="card">
+        <div class="card__header">
+          <h3 class="card__title">All Sites (${state.sites.length})</h3>
+          <button class="btn btn--primary" onclick="window._app.addSite()"><i data-lucide="plus"></i> Add Site</button>
+        </div>
+        <div class="card__body">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Site Name</th><th>Address</th><th>Manager</th><th>Staff</th><th>Status</th><th>Start Date</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── CERTIFICATES PAGE ──
+  function renderCertificates() {
+    // Build filtered list
+    let filtered = state.certificates.slice();
+
+    // Text search
+    if (certFilters.search) {
+      const q = certFilters.search.toLowerCase();
+      filtered = filtered.filter(c => {
+        const staffName = getStaffName(c.staffId).toLowerCase();
+        return staffName.includes(q) || c.type.toLowerCase().includes(q) || (c.notes || '').toLowerCase().includes(q);
+      });
+    }
+
+    // Type filter (multi-select — show ALL selected types, or all if none selected)
+    if (certFilters.types.length > 0) {
+      filtered = filtered.filter(c => certFilters.types.includes(c.type));
+    }
+
+    // Expiring only
+    if (certFilters.expiringOnly) {
+      filtered = filtered.filter(c => daysUntil(c.expiryDate) <= 30);
+    }
+
+    // Build filter bar with multi-select type checkboxes
+    const typeCheckboxes = CERT_TYPES.map(t => {
+      const count = state.certificates.filter(c => c.type === t).length;
+      if (count === 0) return '';
+      const checked = certFilters.types.includes(t) ? 'checked' : '';
+      return `<label class="checkbox-tag"><input type="checkbox" value="${t}" ${checked} onchange="window._app.toggleCertTypeFilter('${t}')">${t} (${count})</label>`;
+    }).filter(Boolean).join('');
+
+    const rows = filtered.map(c => {
+      const days = daysUntil(c.expiryDate);
+      const thumbHtml = c.images && c.images.length > 0
+        ? `<div class="cert-images">${c.images.slice(0, 3).map(img => `<img src="${img}" alt="Cert" onclick="window._app.openLightbox('${img}')">`).join('')}${c.images.length > 3 ? `<div class="cert-images__more">+${c.images.length - 3}</div>` : ''}</div>`
+        : '<span style="color:var(--color-text-muted);font-size:0.8rem;">No images</span>';
+
+      return `
+        <tr>
+          <td><strong>${getStaffName(c.staffId)}</strong></td>
+          <td><span class="badge badge--info">${c.type}</span></td>
+          <td>${formatDate(c.issueDate)}</td>
+          <td>${formatDate(c.expiryDate)}</td>
+          <td><span class="badge ${getExpiryBadgeClass(days)}">${getExpiryLabel(days)}</span></td>
+          <td>${thumbHtml}</td>
+          <td>
+            <button class="btn btn--ghost btn--sm" onclick="window._app.editCert('${c.id}')" title="Edit"><i data-lucide="pencil"></i></button>
+            <button class="btn btn--ghost btn--sm" onclick="window._app.deleteCert('${c.id}')" title="Delete"><i data-lucide="trash-2"></i></button>
+          </td>
+        </tr>`;
+    }).join('');
+
+    pageContent.innerHTML = `
+      <div class="filter-bar">
+        <input type="text" class="form-input" placeholder="Search staff, type, notes..." value="${certFilters.search}" oninput="window._app.onCertSearch(this.value)" style="min-width:240px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;">
+          <input type="checkbox" ${certFilters.expiringOnly ? 'checked' : ''} onchange="window._app.toggleExpiringOnly(this.checked)">
+          Expiring / Expired only
+        </label>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:0.8rem;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Filter by Certificate Type:</div>
+        <div class="checkbox-group">${typeCheckboxes || '<span style="font-size:0.8rem;color:var(--color-text-muted);">No certificate types in data</span>'}</div>
+      </div>
+      <div class="card">
+        <div class="card__header">
+          <h3 class="card__title">Certificates (${filtered.length})</h3>
+          <button class="btn btn--primary" onclick="window._app.addCert()"><i data-lucide="plus"></i> Add Certificate</button>
+        </div>
+        <div class="card__body">
+          ${filtered.length === 0
+            ? `<div class="empty-state"><i data-lucide="award"></i><h3>No certificates found</h3><p>Adjust filters or add a new certificate.</p></div>`
+            : `<div class="table-wrapper"><table>
+              <thead>
+                <tr>
+                  <th>Staff</th><th>Type</th><th>Issued</th><th>Expiry</th><th>Status</th><th>Images</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table></div>`
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  // ── REPORTS PAGE ──
+  function renderReports() {
+    const activeStaff = state.staff.filter(s => s.status === 'active').length;
+    const expiredCount = state.certificates.filter(c => daysUntil(c.expiryDate) < 0).length;
+    const expiringCount = state.certificates.filter(c => { const d = daysUntil(c.expiryDate); return d >= 0 && d <= 30; }).length;
+
+    pageContent.innerHTML = `
+      <div class="report-options">
+        <div class="report-option" onclick="window._app.generateReport('compliance')">
+          <i data-lucide="shield-check"></i>
+          <h3>Compliance Summary</h3>
+          <p>Overall safety compliance across all sites</p>
+        </div>
+        <div class="report-option" onclick="window._app.generateReport('staff')">
+          <i data-lucide="users"></i>
+          <h3>Staff by Site</h3>
+          <p>Staff allocation breakdown per site</p>
+        </div>
+        <div class="report-option" onclick="window._app.generateReport('certs')">
+          <i data-lucide="award"></i>
+          <h3>Certificate Status</h3>
+          <p>All certificates with expiry details</p>
+        </div>
+        <div class="report-option" onclick="window._app.generateReport('expired')">
+          <i data-lucide="alert-octagon"></i>
+          <h3>Expired / Expiring</h3>
+          <p>Certificates requiring immediate action</p>
+        </div>
+      </div>
+      <div class="report-output" id="reportOutput">
+        <div class="card">
+          <div class="card__body">
+            <div class="empty-state">
+              <i data-lucide="file-bar-chart"></i>
+              <h3>Select a report type above</h3>
+              <p>Click a report card to generate the report</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function generateReport(type) {
+    const output = document.getElementById('reportOutput');
+    if (!output) return;
+
+    let html = '';
+
+    if (type === 'compliance') {
+      const totalCerts = state.certificates.length;
+      const validCerts = state.certificates.filter(c => daysUntil(c.expiryDate) > 30).length;
+      const complianceRate = totalCerts > 0 ? Math.round((validCerts / totalCerts) * 100) : 0;
+
+      html = `
+        <div class="card">
+          <div class="card__header"><h3 class="card__title">Compliance Summary Report</h3><span style="font-size:0.8rem;color:var(--color-text-muted);">Generated: ${formatDate(new Date().toISOString())}</span></div>
+          <div class="card__body">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-card__icon stat-card__icon--green"><i data-lucide="percent"></i></div>
+                <div><div class="stat-card__value">${complianceRate}%</div><div class="stat-card__label">Compliance Rate</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-card__icon stat-card__icon--green"><i data-lucide="check-circle"></i></div>
+                <div><div class="stat-card__value">${validCerts}</div><div class="stat-card__label">Valid Certificates</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-card__icon stat-card__icon--red"><i data-lucide="alert-circle"></i></div>
+                <div><div class="stat-card__value">${totalCerts - validCerts}</div><div class="stat-card__label">Expiring / Expired</div></div>
+              </div>
+            </div>
+            <p style="font-size:0.85rem;color:var(--color-text-muted);margin-top:16px;">
+              ${activeStaff} active staff across ${state.sites.filter(s => s.status === 'active').length} active sites.
+              ${complianceRate < 80 ? '<br><strong style="color:var(--color-danger);">⚠ Compliance rate is below 80% — immediate action required.</strong>' : '<br><strong style="color:var(--color-success);">✓ Compliance rate is satisfactory.</strong>'}
+            </p>
+          </div>
         </div>`;
+    }
+
+    if (type === 'staff') {
+      const siteGroups = {};
+      state.sites.forEach(s => {
+        siteGroups[s.id] = { name: s.name, staff: state.staff.filter(st => st.siteId === s.id) };
+      });
+      html = `<div class="card"><div class="card__header"><h3 class="card__title">Staff by Site Report</h3></div><div class="card__body">`;
+      Object.values(siteGroups).forEach(g => {
+        html += `<h4 style="margin:16px 0 8px;font-size:0.95rem;">${g.name} <span class="badge badge--info">${g.staff.length}</span></h4>`;
+        if (g.staff.length === 0) {
+          html += `<p style="font-size:0.8rem;color:var(--color-text-muted);">No staff assigned</p>`;
+        } else {
+          html += `<table><thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead><tbody>`;
+          g.staff.forEach(s => {
+            html += `<tr><td>${s.name}</td><td>${s.role}</td><td><span class="badge ${s.status === 'active' ? 'badge--success' : 'badge--neutral'}">${s.status}</span></td></tr>`;
+          });
+          html += `</tbody></table>`;
+        }
+      });
+      html += `</div></div>`;
+    }
+
+    if (type === 'certs') {
+      html = `<div class="card"><div class="card__header"><h3 class="card__title">All Certificates</h3></div><div class="card__body"><div class="table-wrapper"><table>
+        <thead><tr><th>Staff</th><th>Type</th><th>Issued</th><th>Expiry</th><th>Status</th></tr></thead><tbody>`;
+      state.certificates.forEach(c => {
+        const days = daysUntil(c.expiryDate);
+        html += `<tr><td>${getStaffName(c.staffId)}</td><td>${c.type}</td><td>${formatDate(c.issueDate)}</td><td>${formatDate(c.expiryDate)}</td><td><span class="badge ${getExpiryBadgeClass(days)}">${getExpiryLabel(days)}</span></td></tr>`;
+      });
+      html += `</tbody></table></div></div></div>`;
+    }
+
+    if (type === 'expired') {
+      const bad = state.certificates.filter(c => daysUntil(c.expiryDate) <= 30).sort((a, b) => daysUntil(a.expiryDate) - daysUntil(b.expiryDate));
+      html = `<div class="card"><div class="card__header"><h3 class="card__title">Expired / Expiring Certificates</h3></div><div class="card__body">`;
+      if (bad.length === 0) {
+        html += `<p style="font-size:0.85rem;color:var(--color-text-muted);">No certificates expiring or expired.</p>`;
+      } else {
+        html += `<div class="table-wrapper"><table><thead><tr><th>Staff</th><th>Type</th><th>Expiry</th><th>Status</th></tr></thead><tbody>`;
+        bad.forEach(c => {
+          const days = daysUntil(c.expiryDate);
+          html += `<tr><td><strong>${getStaffName(c.staffId)}</strong></td><td>${c.type}</td><td>${formatDate(c.expiryDate)}</td><td><span class="badge ${getExpiryBadgeClass(days)}">${getExpiryLabel(days)}</span></td></tr>`;
+        });
+        html += `</tbody></table></div>`;
+      }
+      html += `</div></div>`;
+    }
+
+    output.innerHTML = html;
+    lucide.createIcons();
+  }
+
+  // ── MODAL SYSTEM ──
+  function openModal(title, bodyHtml, footerHtml) {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = bodyHtml;
+    modalFooter.innerHTML = footerHtml;
+    modalOverlay.classList.add('modal-overlay--open');
+    lucide.createIcons();
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('modal-overlay--open');
+  }
+
+  // ── LIGHTBOX ──
+  function openLightbox(src) {
+    let lb = document.querySelector('.lightbox-overlay');
+    if (!lb) {
+      lb = document.createElement('div');
+      lb.className = 'lightbox-overlay';
+      lb.innerHTML = '<img>';
+      lb.addEventListener('click', () => lb.classList.remove('lightbox-overlay--open'));
+      document.body.appendChild(lb);
+    }
+    lb.querySelector('img').src = src;
+    lb.classList.add('lightbox-overlay--open');
+  }
+
+  // ── NOTIFICATIONS ──
+  function renderNotifications() {
+    const unread = state.notifications.filter(n => !n.read).length;
+    notifBadge.textContent = unread;
+    notifBadge.dataset.count = unread;
+    notifBadge.style.display = unread > 0 ? 'flex' : 'none';
+
+    if (state.notifications.length === 0) {
+      notifList.innerHTML = `<div class="notif-empty"><i data-lucide="bell-off"></i><p>No notifications</p></div>`;
+      lucide.createIcons();
+      return;
+    }
+
+    const iconMap = {
+      warning: { icon: 'alert-triangle', cls: 'notif-item__icon--warning' },
+      danger: { icon: 'alert-octagon', cls: 'notif-item__icon--danger' },
+      info: { icon: 'info', cls: 'notif-item__icon--info' },
+      success: { icon: 'check-circle', cls: 'notif-item__icon--success' },
+    };
+
+    notifList.innerHTML = state.notifications.map(n => {
+      const ic = iconMap[n.type] || iconMap.info;
+      return `
+        <div class="notif-item" style="${n.read ? 'opacity:0.6;' : ''}" onclick="window._app.markNotifRead('${n.id}')">
+          <div class="notif-item__icon ${ic.cls}"><i data-lucide="${ic.icon}"></i></div>
+          <div class="notif-item__text">
+            <div class="notif-item__title">${n.title}</div>
+            <div class="notif-item__desc">${n.desc}</div>
+            <div class="notif-item__time">${formatDate(n.time)}</div>
+          </div>
+        </div>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  function toggleNotifPane() {
+    notifPane.classList.toggle('notifications-pane--open');
+    renderNotifications();
+  }
+
+  function markNotifRead(id) {
+    const n = state.notifications.find(x => x.id === id);
+    if (n) { n.read = true; saveData(); renderNotifications(); }
+  }
+
+  // ── STAFF CRUD ──
+  function staffFormHtml(staff) {
+    const siteOptions = state.sites.map(s =>
+      `<option value="${s.id}" ${staff && staff.siteId === s.id ? 'selected' : ''}>${s.name}</option>`
+    ).join('');
+
+    return `
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input class="form-input" id="staffName" value="${staff ? staff.name : ''}" placeholder="e.g. John Smith">
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <input class="form-input" id="staffRole" value="${staff ? staff.role : ''}" placeholder="e.g. Operative">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Phone</label>
+          <input class="form-input" id="staffPhone" value="${staff ? staff.phone : ''}" placeholder="07...">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input class="form-input" id="staffEmail" value="${staff ? staff.email : ''}" placeholder="name@company.co.uk">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Site</label>
+          <select class="form-select" id="staffSite">
+            <option value="">— Unassigned —</option>
+            ${siteOptions}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select class="form-select" id="staffStatus">
+            <option value="active" ${staff && staff.status === 'active' ? 'selected' : ''}>Active</option>
+            <option value="inactive" ${staff && staff.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input class="form-input" type="date" id="staffStartDate" value="${staff ? staff.startDate : new Date().toISOString().split('T')[0]}">
+      </div>
+    `;
+  }
+
+  function getStaffFormData() {
+    return {
+      name: document.getElementById('staffName').value.trim(),
+      role: document.getElementById('staffRole').value.trim(),
+      phone: document.getElementById('staffPhone').value.trim(),
+      email: document.getElementById('staffEmail').value.trim(),
+      siteId: document.getElementById('staffSite').value,
+      status: document.getElementById('staffStatus').value,
+      startDate: document.getElementById('staffStartDate').value,
+    };
+  }
+
+  function addStaff() {
+    openModal('Add Staff Member', staffFormHtml(null),
+      `<button class="btn btn--secondary" onclick="window._app.closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="window._app.saveStaff()">Save</button>`
+    );
+  }
+
+  function editStaff(id) {
+    const s = getStaffById(id);
+    if (!s) return;
+    openModal('Edit Staff Member', staffFormHtml(s),
+      `<button class="btn btn--secondary" onclick="window._app.closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="window._app.saveStaff('${id}')">Update</button>`
+    );
+  }
+
+  function saveStaff(id) {
+    const data = getStaffFormData();
+    if (!data.name) { alert('Name is required.'); return; }
+
+    if (id) {
+      const s = getStaffById(id);
+      if (s) Object.assign(s, data);
+    } else {
+      state.staff.push({ id: genId(), ...data });
+    }
+    saveData();
+    closeModal();
+    renderPage();
+  }
+
+  function deleteStaff(id) {
+    if (!confirm('Delete this staff member?')) return;
+    state.staff = state.staff.filter(s => s.id !== id);
+    state.certificates = state.certificates.filter(c => c.staffId !== id);
+    saveData();
+    renderPage();
+  }
+
+  // ── SITE CRUD ──
+  function siteFormHtml(site) {
+    return `
+      <div class="form-group">
+        <label>Site Name</label>
+        <input class="form-input" id="siteName" value="${site ? site.name : ''}" placeholder="e.g. Riverside Tower Block">
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <input class="form-input" id="siteAddress" value="${site ? site.address : ''}" placeholder="Full address">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Manager</label>
+          <input class="form-input" id="siteManager" value="${site ? site.manager : ''}" placeholder="Site manager name">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select class="form-select" id="siteStatus">
+            <option value="active" ${site && site.status === 'active' ? 'selected' : ''}>Active</option>
+            <option value="completed" ${site && site.status === 'completed' ? 'selected' : ''}>Completed</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input class="form-input" type="date" id="siteStartDate" value="${site ? site.startDate : new Date().toISOString().split('T')[0]}">
+      </div>
+    `;
+  }
+
+  function getSiteFormData() {
+    return {
+      name: document.getElementById('siteName').value.trim(),
+      address: document.getElementById('siteAddress').value.trim(),
+      manager: document.getElementById('siteManager').value.trim(),
+      status: document.getElementById('siteStatus').value,
+      startDate: document.getElementById('siteStartDate').value,
+    };
+  }
+
+  function addSite() {
+    openModal('Add Site', siteFormHtml(null),
+      `<button class="btn btn--secondary" onclick="window._app.closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="window._app.saveSite()">Save</button>`
+    );
+  }
+
+  function editSite(id) {
+    const s = getSiteById(id);
+    if (!s) return;
+    openModal('Edit Site', siteFormHtml(s),
+      `<button class="btn btn--secondary" onclick="window._app.closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="window._app.saveSite('${id}')">Update</button>`
+    );
+  }
+
+  function saveSite(id) {
+    const data = getSiteFormData();
+    if (!data.name) { alert('Site name is required.'); return; }
+
+    if (id) {
+      const s = getSiteById(id);
+      if (s) Object.assign(s, data);
+    } else {
+      state.sites.push({ id: genId(), ...data });
+    }
+    saveData();
+    closeModal();
+    renderPage();
+  }
+
+  function deleteSite(id) {
+    if (!confirm('Delete this site?')) return;
+    state.sites = state.sites.filter(s => s.id !== id);
+    saveData();
+    renderPage();
+  }
+
+  // ── CERTIFICATE CRUD ──
+  let certUploadImages = []; // temp storage for images being added in modal
+
+  function certFormHtml(cert) {
+    certUploadImages = (cert && cert.images) ? [...cert.images] : [];
+
+    const staffOptions = state.staff.map(s =>
+      `<option value="${s.id}" ${cert && cert.staffId === s.id ? 'selected' : ''}>${s.name}</option>`
+    ).join('');
+
+    const typeOptions = CERT_TYPES.map(t =>
+      `<option value="${t}" ${cert && cert.type === t ? 'selected' : ''}>${t}</option>`
+    ).join('');
+
+    return `
+      <div class="form-row">
+        <div class="form-group">
+          <label>Staff Member</label>
+          <select class="form-select" id="certStaff">${staffOptions}</select>
+        </div>
+        <div class="form-group">
+          <label>Certificate Type</label>
+          <select class="form-select" id="certType">${typeOptions}</select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Issue Date</label>
+          <input class="form-input" type="date" id="certIssueDate" value="${cert ? cert.issueDate : new Date().toISOString().split('T')[0]}">
+        </div>
+        <div class="form-group">
+          <label>Expiry Date</label>
+          <input class="form-input" type="date" id="certExpiryDate" value="${cert ? cert.expiryDate : ''}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea class="form-textarea" id="certNotes" placeholder="Additional notes...">${cert ? cert.notes || '' : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Certificate Images</label>
+        <p class="form-hint">Upload photos of the training certificate as proof</p>
+        <div class="image-upload-area" id="certUploadArea">
+          <i data-lucide="upload-cloud"></i>
+          <p>Click to upload images (JPG, PNG)</p>
+          <input type="file" id="certFileInput" accept="image/*" multiple style="display:none;">
+        </div>
+        <div class="image-preview-grid" id="certImagePreview"></div>
+      </div>
+    `;
+  }
+
+  function renderCertImagePreviews() {
+    const container = document.getElementById('certImagePreview');
+    if (!container) return;
+    container.innerHTML = certUploadImages.map((img, i) => `
+      <div class="image-preview-item">
+        <img src="${img}" alt="Certificate image">
+        <button class="image-preview-item__remove" onclick="window._app.removeCertImage(${i})">&times;</button>
+      </div>
+    `).join('');
+  }
+
+  function removeCertImage(index) {
+    certUploadImages.splice(index, 1);
+    renderCertImagePreviews();
+  }
+
+  function handleCertFileUpload(e) {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        certUploadImages.push(ev.target.result);
+        renderCertImagePreviews();
       };
       reader.readAsDataURL(file);
-    }
-  }, 100);
-};
-
-window.renewCert = function(empId, certId) {
-  const issueDate = document.getElementById('renewIssueDate').value;
-  const expiryDate = document.getElementById('renewExpiryDate').value;
-
-  const existing = certifications.find(c => c.employeeId === empId && c.certId === certId);
-  if (existing) {
-    existing.issued = issueDate;
-    existing.expires = expiryDate;
-    if (window._renewPendingImage) existing.image = window._renewPendingImage;
-  } else {
-    certifications.push({
-      employeeId: empId,
-      certId,
-      issued: issueDate,
-      expires: expiryDate,
-      image: window._renewPendingImage || null
     });
+    // Reset input so same file can be selected again
+    e.target.value = '';
   }
-  window._renewPendingImage = null;
 
-  closeModal();
-  renderTraining();
-  renderDashboard();
-  renderEmployees();
-  showToast('success', 'Certification renewed successfully');
-};
+  function setupCertUploadListeners() {
+    const area = document.getElementById('certUploadArea');
+    const input = document.getElementById('certFileInput');
+    if (area && input) {
+      area.addEventListener('click', () => input.click());
+      input.addEventListener('change', handleCertFileUpload);
+    }
+  }
 
-// ========== Helpers ==========
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-}
+  function getCertFormData() {
+    return {
+      staffId: document.getElementById('certStaff').value,
+      type: document.getElementById('certType').value,
+      issueDate: document.getElementById('certIssueDate').value,
+      expiryDate: document.getElementById('certExpiryDate').value,
+      notes: document.getElementById('certNotes').value.trim(),
+      images: [...certUploadImages],
+    };
+  }
 
-function timeToMin(time) {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-}
+  function addCert() {
+    openModal('Add Certificate', certFormHtml(null),
+      `<button class="btn btn--secondary" onclick="window._app.closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="window._app.saveCert()">Save</button>`
+    );
+    setTimeout(setupCertUploadListeners, 50);
+  }
 
-function getFutureDate(months) {
-  const d = new Date();
-  d.setMonth(d.getMonth() + months);
-  return d.toISOString().split('T')[0];
-}
+  function editCert(id) {
+    const c = state.certificates.find(x => x.id === id);
+    if (!c) return;
+    openModal('Edit Certificate', certFormHtml(c),
+      `<button class="btn btn--secondary" onclick="window._app.closeModal()">Cancel</button>
+       <button class="btn btn--primary" onclick="window._app.saveCert('${id}')">Update</button>`
+    );
+    setTimeout(setupCertUploadListeners, 50);
+  }
 
-function populateSiteFilter(selectId) {
-  const sel = document.getElementById(selectId);
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = '<option value="">All Sites</option>' + sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  sel.value = current;
-}
+  function saveCert(id) {
+    const data = getCertFormData();
+    if (!data.staffId || !data.type) { alert('Staff member and certificate type are required.'); return; }
 
-function populateTradeFilter(selectId) {
-  const sel = document.getElementById(selectId);
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = '<option value="">All Trades</option>' + tradeList.map(t => `<option value="${t}">${t}</option>`).join('');
-  sel.value = current;
-}
+    if (id) {
+      const c = state.certificates.find(x => x.id === id);
+      if (c) Object.assign(c, data);
+    } else {
+      state.certificates.push({ id: genId(), ...data });
+    }
+    certUploadImages = [];
+    saveData();
+    closeModal();
+    renderPage();
+  }
 
-function populateCertTypeFilter(selectId) {
-  const sel = document.getElementById(selectId);
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = '<option value="">All Types</option>' + certTypes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  sel.value = current;
-}
+  function deleteCert(id) {
+    if (!confirm('Delete this certificate?')) return;
+    state.certificates = state.certificates.filter(c => c.id !== id);
+    saveData();
+    renderPage();
+  }
 
-// Toast
-function showToast(type, message) {
-  const container = document.getElementById('toastContainer');
-  const toast = document.createElement('div');
-  toast.className = `toast toast--${type}`;
-  const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : type === 'warning' ? 'alert-triangle' : 'info';
-  toast.innerHTML = `<i data-lucide="${iconName}"></i> ${message}`;
-  container.appendChild(toast);
-  lucide.createIcons();
-  setTimeout(() => toast.remove(), 4000);
-}
+  // ── CERT FILTERS ──
+  function onCertSearch(val) {
+    certFilters.search = val;
+    renderCertificates();
+    lucide.createIcons();
+  }
 
-window.closeModal = closeModal;
+  function toggleCertTypeFilter(type) {
+    const idx = certFilters.types.indexOf(type);
+    if (idx >= 0) {
+      certFilters.types.splice(idx, 1);
+    } else {
+      certFilters.types.push(type);
+    }
+    renderCertificates();
+    lucide.createIcons();
+  }
+
+  function toggleExpiringOnly(checked) {
+    certFilters.expiringOnly = checked;
+    renderCertificates();
+    lucide.createIcons();
+  }
+
+  // ── MOBILE MENU ──
+  function toggleMobileMenu() {
+    document.getElementById('sidebar').classList.toggle('sidebar--open');
+  }
+
+  // ── INIT ──
+  function init() {
+    // Navigation clicks
+    sidebarNav.querySelectorAll('.sidebar__link').forEach(btn => {
+      btn.addEventListener('click', () => {
+        navigateTo(btn.dataset.page);
+        // Close mobile menu
+        document.getElementById('sidebar').classList.remove('sidebar--open');
+      });
+    });
+
+    // Notifications button
+    document.getElementById('notifBtn').addEventListener('click', toggleNotifPane);
+    document.getElementById('notifClose').addEventListener('click', () => {
+      notifPane.classList.remove('notifications-pane--open');
+    });
+
+    // Mobile menu
+    document.getElementById('menuToggle').addEventListener('click', toggleMobileMenu);
+
+    // Modal close
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    // Close sidebar on outside click (mobile)
+    document.addEventListener('click', (e) => {
+      const sidebar = document.getElementById('sidebar');
+      const menuBtn = document.getElementById('menuToggle');
+      if (sidebar.classList.contains('sidebar--open') && !sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+        sidebar.classList.remove('sidebar--open');
+      }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        notifPane.classList.remove('notifications-pane--open');
+        document.querySelector('.lightbox-overlay')?.classList.remove('lightbox-overlay--open');
+      }
+    });
+
+    // Check for expiring certificates and create notifications
+    generateExpiryNotifications();
+
+    // Initial render
+    renderNav();
+    renderPage();
+    renderNotifications();
+  }
+
+  function generateExpiryNotifications() {
+    // Only add notifications for certs expiring within 30 days that don't already have a notification
+    state.certificates.forEach(c => {
+      const days = daysUntil(c.expiryDate);
+      if (days <= 30) {
+        const exists = state.notifications.some(n =>
+          n.desc.includes(getStaffName(c.staffId)) && n.desc.includes(c.type)
+        );
+        if (!exists) {
+          state.notifications.push({
+            id: genId(),
+            type: days < 0 ? 'danger' : 'warning',
+            title: days < 0 ? 'Certificate Expired' : 'Certificate Expiring Soon',
+            desc: `${getStaffName(c.staffId)} — ${c.type}: ${getExpiryLabel(days)}`,
+            time: new Date().toISOString(),
+            read: false,
+          });
+        }
+      }
+    });
+    saveData();
+  }
+
+  // ── Public API (for onclick handlers) ──
+  window._app = {
+    navigateTo,
+    addStaff, editStaff, saveStaff, deleteStaff,
+    addSite, editSite, saveSite, deleteSite,
+    addCert, editCert, saveCert, deleteCert,
+    removeCertImage,
+    generateReport,
+    openLightbox,
+    closeModal,
+    toggleNotifPane,
+    markNotifRead,
+    onCertSearch,
+    toggleCertTypeFilter,
+    toggleExpiringOnly,
+  };
+
+  // Start
+  document.addEventListener('DOMContentLoaded', init);
+  if (document.readyState !== 'loading') init();
+})();
